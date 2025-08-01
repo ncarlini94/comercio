@@ -36,11 +36,20 @@ const Pedidos = () => {
     setProductos(Array.isArray(data) ? data : [])
   }
 
+  const proveedorObj = proveedores.find((p) => p.nombre === proveedorSeleccionado)
+  const productosProveedor = proveedorObj
+    ? productos.filter((p) => p.id_proveedor === proveedorObj.id_proveedores)
+    : []
+
   const agregarItem = () => {
-    if (productos.length > 0) {
+    if (productosProveedor.length > 0) {
       setItems([
         ...items,
-        { producto: productos[0], cantidad: 1, costo: productos[0].costo || productos[0].precio }
+        {
+          producto: productosProveedor[0],
+          cantidad: 1,
+          costo: productosProveedor[0].costo || productosProveedor[0].precio
+        }
       ])
     }
   }
@@ -120,8 +129,14 @@ const Pedidos = () => {
           <h1 className="text-2xl font-bold text-gray-900">Pedidos a Proveedores</h1>
         </div>
         <button
-          onClick={() => setMostrarNuevo(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          onClick={() => {
+            setProveedorSeleccionado('')
+            setItems([])
+            setNota('')
+            setMostrarNuevo(true)
+          }}
+          disabled={proveedores?.length === 0}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
         >
           <Plus className="w-4 h-4" />
           Nuevo Pedido
@@ -190,13 +205,15 @@ const Pedidos = () => {
           items={items}
           setProveedorSeleccionado={setProveedorSeleccionado}
           actualizarItem={actualizarItem}
-          productos={productos}
+          productos={productosProveedor}
           eliminarItem={eliminarItem}
           nota={nota}
           setNota={setNota}
           totalPedido={totalPedido}
           setMostrarNuevo={setMostrarNuevo}
           handleSubmit={handleSubmit}
+          setPedidoSeleccionado={setPedidoSeleccionado}
+          setProductosSeleccionado={setProductosSeleccionado}
         />
       )}
 

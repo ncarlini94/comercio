@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types'
+import styles from './agregarProducto.module.css'
 
 const AgregarProducto = ({ loading, formData, setFormData, onSubmit, proveedores, resetForm }) => {
   const handleChange = (e) => {
@@ -8,7 +9,9 @@ const AgregarProducto = ({ loading, formData, setFormData, onSubmit, proveedores
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
+      <div
+        className={`${styles.container} fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50`}
+      >
         <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
           <h3 className="text-lg font-semibold mb-4">Agregar Producto</h3>
           <form onSubmit={onSubmit} className="space-y-4">
@@ -20,7 +23,7 @@ const AgregarProducto = ({ loading, formData, setFormData, onSubmit, proveedores
                 required
                 value={formData.nombre}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="validar w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -39,9 +42,10 @@ const AgregarProducto = ({ loading, formData, setFormData, onSubmit, proveedores
                 <input
                   type="text"
                   name="costo"
+                  required
                   value={formData.costo}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="validar w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
@@ -53,7 +57,7 @@ const AgregarProducto = ({ loading, formData, setFormData, onSubmit, proveedores
                   required
                   value={formData.precio}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="validar w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -68,7 +72,7 @@ const AgregarProducto = ({ loading, formData, setFormData, onSubmit, proveedores
                   required
                   value={formData.stock}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="validar w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
@@ -81,7 +85,7 @@ const AgregarProducto = ({ loading, formData, setFormData, onSubmit, proveedores
                   name="stock_minimo"
                   value={formData.stock_minimo}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="validar w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -92,7 +96,8 @@ const AgregarProducto = ({ loading, formData, setFormData, onSubmit, proveedores
                   value={formData.id_proveedor}
                   onChange={handleChange}
                   name="id_proveedor"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  className="validar w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Sin asignar</option>
                   {proveedores.map((proveedor) => (

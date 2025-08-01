@@ -14,8 +14,12 @@ const AgregarPedido = ({
   totalPedido,
   setMostrarNuevo,
   handleSubmit,
-  setItems
+  setItems,
+  setPedidoSeleccionado,
+  setProductosSeleccionado
 }) => {
+  console.log('Productos disponibles:', productos)
+  console.log('Items del pedido:', items)
   return (
     <>
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -45,7 +49,8 @@ const AgregarPedido = ({
                   <h4 className="font-medium text-gray-900">Productos del Pedido</h4>
                   <button
                     onClick={agregarItem}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                    disabled={!proveedorSeleccionado || productos.length === 0}
+                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:hover:bg-green-600"
                   >
                     Agregar Producto
                   </button>
@@ -112,20 +117,23 @@ const AgregarPedido = ({
                 </div>
                 <div className="flex space-x-3">
                   <button
+                    type="button"
                     onClick={() => {
+                      setPedidoSeleccionado(null)
+                      setProductosSeleccionado([])
                       setMostrarNuevo(false)
-                      setProveedorSeleccionado('')
                       setItems([])
+                      setProveedorSeleccionado('')
                       setNota('')
                     }}
-                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-300 rounded-md hover:opacity-70"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleSubmit}
                     disabled={!proveedorSeleccionado || items.length === 0}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600"
                   >
                     Crear Pedido
                   </button>
@@ -160,6 +168,8 @@ AgregarPedido.propTypes = {
   ).isRequired,
   setProveedorSeleccionado: PropTypes.func.isRequired,
   actualizarItem: PropTypes.func.isRequired,
+  setPedidoSeleccionado: PropTypes.func.isRequired,
+  setProductosSeleccionado: PropTypes.func.isRequired,
   productos: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,

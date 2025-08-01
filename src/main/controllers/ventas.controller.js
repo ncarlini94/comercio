@@ -58,7 +58,10 @@ export const agregarVenta = async (venta) => {
       }
 
       // Crear la venta
-      ventaCreada = await Ventas.create({ total, vendedor: venta.vendedor }, { transaction: t })
+      ventaCreada = await Ventas.create(
+        { total, metodo: venta.metodo, vendedor: venta.vendedor },
+        { transaction: t }
+      )
 
       // Registrar productos vendidos y descontar stock
       for (const item of venta.carrito) {
@@ -87,36 +90,34 @@ export const agregarVenta = async (venta) => {
 export const eliminarVenta = async (id) => {
   try {
     await sequelize.transaction(async (t) => {
-      // Traer todos los productos vendidos de esa venta
       const productosVendidos = await ProductosVendidos.findAll({
         where: { id_ventas: id },
         transaction: t
-      })
+      });
 
-      // Por cada producto vendido, devolver el stock
-      for (const item of productosVendidos) {
-        const producto = await Inventario.findByPk(item.id_producto, { transaction: t })
-        if (producto) {
-          await producto.increment('stock', { by: item.cantidad, transaction: t })
+      for (const { producto: nombre, cantidad } of productosVendidos) {
+        const productoInv = await Inventario.findOne({
+          where: { nombre },      // coincide con item.producto
+          transaction: t
+        });
+
+        if (productoInv) {
+          await productoInv.increment('stock', {
+            by: cantidad,
+            transaction: t
+          });
+        } else {
+          console.warn(`No hay inventario con nombre “${nombre}”`);
         }
       }
 
-      // Eliminar los productos vendidos de esa venta
-      await ProductosVendidos.destroy({
-        where: { id_ventas: id },
-        transaction: t
-      })
+      await ProductosVendidos.destroy({ where: { id_ventas: id }, transaction: t });
+      await Ventas.destroy({ where: { id }, transaction: t });
+    });
 
-      // Eliminar la venta
-      await Ventas.destroy({
-        where: { id: id },
-        transaction: t
-      })
-    })
-
-    return { message: 'Venta eliminada correctamente' }
+    return { message: 'Venta eliminada y stock restaurado' };
   } catch (error) {
-    console.error('Error al eliminar venta:', error)
-    return { error: error.message || 'Error al eliminar la venta' }
+    console.error('Error al eliminar venta:', error);
+    return { error: error.message };
   }
 }

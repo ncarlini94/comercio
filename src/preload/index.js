@@ -7,6 +7,8 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('API', {
+      close: () => ipcRenderer.invoke('close-app'),
+
       login: (data) => ipcRenderer.invoke('login', data),
       registro: (data) => ipcRenderer.invoke('registro', data),
 
@@ -16,6 +18,7 @@ if (process.contextIsolated) {
       obtenerTotalStockBajo: () => ipcRenderer.invoke('obtenerTotalStockBajo'),
       obtenerUltimasVentas: () => ipcRenderer.invoke('obtenerTodasLasVentas'),
       obtenerProductosStockBajo: () => ipcRenderer.invoke('obtenerProductosStockBajo'),
+      obtenerProductosMasVendidos: () => ipcRenderer.invoke('obtenerProductosMasVendidos'),
 
       obtenerTodosLosProductos: () => ipcRenderer.invoke('obtenerTodosLosProductos'),
       agregarProducto: (producto) => ipcRenderer.invoke('agregarProducto', producto),

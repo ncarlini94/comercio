@@ -14,6 +14,10 @@ const Ventas = sequelize.define(
       type: DataTypes.FLOAT,
       allowNull: false
     },
+    metodo: {
+      type: DataTypes.ENUM('Efectivo', 'Mercado Pago', 'Debito', 'Credito'),
+      allowNull: false
+    },
     vendedor: {
       type: DataTypes.STRING,
       allowNull: true

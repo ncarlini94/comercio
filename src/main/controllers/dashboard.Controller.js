@@ -2,7 +2,7 @@ import Inventario from '../models/inventario.model'
 import ProductosVendidos from '../models/productosVendidos.model'
 import Proveedores from '../models/proveedores.model'
 import Ventas from '../models/ventas.model'
-import { where, Op, col } from '@sequelize/core'
+import { where, Op, col, fn, literal } from '@sequelize/core'
 
 export const obtenerTotalProductos = async () => {
   try {
@@ -83,6 +83,7 @@ export const obtenerProductosStockBajo = async () => {
       where: {
         stock: { [Op.lt]: col('stock_minimo') }
       },
+      include: [{ model: Proveedores, as: 'Proveedor' }],
       order: [['stock', 'ASC']]
     })
 
@@ -90,5 +91,21 @@ export const obtenerProductosStockBajo = async () => {
   } catch (error) {
     console.error('Error al obtener productos con stock bajo:', error)
     return { error: 'No se pudo obtener los productos con stock bajo' }
+  }
+}
+
+export const obtenerProductosMasVendidos = async (limit = 10) => {
+  try {
+    const topProductos = await ProductosVendidos.findAll({
+      attributes: ['producto', [fn('sum', col('cantidad')), 'totalVendido']],
+      group: ['producto'],
+      order: [[literal('totalVendido'), 'DESC']],
+      limit,
+      raw: true
+    })
+    return topProductos
+  } catch (error) {
+    console.error('Error al obtener los productos más vendidos:', error)
+    return { error: 'No se pudo obtener los productos más vendidos' }
   }
 }

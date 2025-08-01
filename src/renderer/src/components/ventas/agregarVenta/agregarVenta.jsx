@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
 import { Trash2 } from 'lucide-react'
+import { useState } from 'react'
 
 const AgregarVenta = ({
   vendedor,
@@ -12,6 +13,8 @@ const AgregarVenta = ({
   cargarVentas,
   cargarProductos
 }) => {
+  const [metodo, setMetodo] = useState('Efectivo')
+  const METODOS_PAGO = ['Efectivo', 'Mercado Pago', 'Debito', 'Credito']
   // Agregar producto al carrito
   const agregarAlCarrito = (producto) => {
     const existe = carrito.find((item) => item.producto.id === producto.id)
@@ -58,6 +61,7 @@ const AgregarVenta = ({
           cantidad: item.cantidad
         })),
         total,
+        metodo,
         vendedor: vendedor
       }
 
@@ -99,8 +103,8 @@ const AgregarVenta = ({
                     </div>
                     <button
                       onClick={() => agregarAlCarrito(producto)}
-                      disabled={producto.stock_cantidad === 0}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                      disabled={producto.stock === 0}
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:bg-gray-700 disabled:opacity-50"
                     >
                       Agregar
                     </button>
@@ -142,7 +146,7 @@ const AgregarVenta = ({
                           />
                           <button
                             onClick={() => actualizarCantidadCarrito(item.producto.id, 0)}
-                            className="text-red-600 hover:text-red-800"
+                            className={`text-red-600 hover:text-red-800`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -156,6 +160,20 @@ const AgregarVenta = ({
               <div className="mt-4 space-y-4">
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center mb-4">
+                    <span className="text-lg font-semibold">Metodo de pago:</span>
+                    <select
+                      value={metodo}
+                      onChange={(e) => setMetodo(e.target.value)}
+                      className="border rounded px-2 py-1"
+                    >
+                      {METODOS_PAGO.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-semibold">Total:</span>
                     <span className="text-2xl font-bold text-green-600">
                       ${obtenerTotalCarrito().toFixed(2)}
@@ -168,16 +186,16 @@ const AgregarVenta = ({
                         setMostrarNuevaVenta(false)
                         setCarrito([])
                       }}
-                      className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                      className="flex-1 px-4 py-2 text-white bg-gray-400 rounded-md hover:opacity-70"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={completarVenta}
                       disabled={carrito.length === 0 || loading}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:hover:bg-green-600 transition-colors"
                     >
-                      {loading ? 'Procesando...' : 'Completar Venta'}
+                      {loading ? 'Procesando...' : 'Confirmar'}
                     </button>
                   </div>
                 </div>

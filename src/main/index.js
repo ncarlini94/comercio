@@ -24,7 +24,7 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    show: false,
+    show: true,
     fullscreen: true,
     autoHideMenuBar: false,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -71,6 +71,10 @@ app.whenReady().then(async () => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+ipcMain.handle('close-app', () => {
+  app.quit()
 })
 
 app.on('window-all-closed', () => {

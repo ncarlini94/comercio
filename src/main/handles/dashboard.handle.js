@@ -5,7 +5,8 @@ import {
   obtenerTotalVentasHoy,
   obtenerProductosStockBajo,
   obtenerTotalProveedores,
-  obtenerTotalStockBajo
+  obtenerTotalStockBajo,
+  obtenerProductosMasVendidos
 } from '../controllers/dashboard.Controller'
 
 ipcMain.handle('obtenerTotalProductos', async () => {
@@ -62,6 +63,16 @@ ipcMain.handle('obtenerProductosStockBajo', async () => {
   try {
     const ventas = await obtenerProductosStockBajo()
     return ventas
+  } catch (error) {
+    console.error('Error al obtener las ventas:', error)
+    return { error: 'Error al obtener las ventas' }
+  }
+})
+
+ipcMain.handle('obtenerProductosMasVendidos', async () => {
+  try {
+    const productosMasVendidos = await obtenerProductosMasVendidos()
+    return productosMasVendidos
   } catch (error) {
     console.error('Error al obtener las ventas:', error)
     return { error: 'Error al obtener las ventas' }

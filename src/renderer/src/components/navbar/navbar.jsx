@@ -61,6 +61,12 @@ const Navbar = ({ children, activeSection, onSectionChange }) => {
           >
             Cerrar sesión
           </button>
+          <button
+            className="w-full bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-800 transition mt-3"
+            onClick={() => window.API.close()}
+          >
+            Cerrar programa
+          </button>
         </div>
       </div>
       <div className="flex-1 flex flex-col overflow-hidden">

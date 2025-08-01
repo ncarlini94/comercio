@@ -1,1 +1,27 @@
 @import 'tailwindcss';
+
+input.validar:invalid {
+  border: 1px solid red;
+}
+
+input.validar:valid {
+  border: 1px solid green;
+}
+
+input.validar:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+select.validar:invalid {
+  border: 1px solid red;
+}
+
+select.validar:valid {
+  border: 1px solid green;
+}
+
+select.validar:focus {
+  outline: none;
+  box-shadow: none;
+}

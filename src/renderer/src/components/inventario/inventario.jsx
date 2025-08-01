@@ -5,7 +5,7 @@ import EditarProducto from './editarPoducto/editarProducto'
 
 const Inventario = () => {
   const [productos, setProductos] = useState([])
-  const [proveedores, setProveedores] = useState([])
+  const [proveedores, setProveedores] = useState()
   const [editingProducto, setEditingProducto] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
@@ -143,7 +143,8 @@ const Inventario = () => {
             resetForm()
             setShowFormAgregar(true)
           }}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          disabled={proveedores?.length === 0}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
         >
           <Plus className="w-4 h-4" />
           Agregar Producto
@@ -183,7 +184,7 @@ const Inventario = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Stock Minimo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-10 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Proveedor
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -224,8 +225,12 @@ const Inventario = () => {
                       {producto.stock} unidades
                     </span>
                   </td>
-                  <td className="px-15 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {producto.stock_minimo || ''}
+                  <td className="px-8 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-black}`}
+                    >
+                      {!productos.stock_minimo ? `${producto.stock_minimo} unidades` : ''}
+                    </span>
                   </td>
                   <td className="px-12 py-4 whitespace-nowrap text-sm text-gray-900">
                     {producto.Proveedor?.nombre || 'Sin asignar'}

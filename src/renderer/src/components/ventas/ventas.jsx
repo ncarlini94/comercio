@@ -11,7 +11,6 @@ const Ventas = () => {
   const [carrito, setCarrito] = useState([])
   const [loading, setLoading] = useState(false)
   const vendedor = localStorage.usuario
-
   useEffect(() => {
     cargarVentas()
     cargarProductos()
@@ -74,7 +73,8 @@ const Ventas = () => {
         </div>
         <button
           onClick={() => setMostrarNuevaVenta(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          disabled={!productos.length}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
         >
           <Plus className="w-4 h-4" />
           Nueva Venta
@@ -98,6 +98,9 @@ const Ventas = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Productos
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Metodo de Pago
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   vendedor
@@ -127,6 +130,7 @@ const Ventas = () => {
                       ? 'Producto'
                       : 'Productos'}
                   </td>
+                  <td className="px-10 py-4 text-sm text-gray-900">{venta.metodo}</td>
                   <td className="px-10 py-4 text-sm text-gray-900">{venta.vendedor}</td>
                   <td className="px-11 py-4 text-right">
                     <button

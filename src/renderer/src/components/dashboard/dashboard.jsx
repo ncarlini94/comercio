@@ -25,8 +25,9 @@ const Dashboard = () => {
   // Listados
   const [ventasRecientes, setVentasRecientes] = useState([])
   const [productosStockBajo, setProductosStockBajo] = useState([])
+  const [productosMasVendidos, setProductosMasVendidos] = useState([])
 
-  // Carga de datos desde las APIs
+  // Carga de datos
   const cargarDashboard = async () => {
     try {
       const [{ totalProductos }, { totalProveedores }, { totalVentasHoy }, { totalStockBajo }] =
@@ -49,10 +50,15 @@ const Dashboard = () => {
 
       const bajo = await window.API.obtenerProductosStockBajo()
       setProductosStockBajo(bajo || [])
+
+      const masVendidos = await window.API.obtenerProductosMasVendidos()
+      setProductosMasVendidos(masVendidos || [])
     } catch (error) {
       console.error('Error cargando datos del panel:', error)
     }
   }
+
+  console.log('Productos mas vendidos:', productosMasVendidos)
 
   const TarjetaEstadistica = ({ titulo, valor, icono: Icono, color, sufijo = '' }) => (
     <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -106,31 +112,42 @@ const Dashboard = () => {
         />
       </div>
 
+      {productosMasVendidos.length > 0 && (
+        <section className="bg-white p-2 rounded-lg shadow-sm border mb-2">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Productos más vendidos</h2>
+          <div className="flex items-center justify-between">
+            {productosMasVendidos.map((prod, idx) => (
+              <div
+                key={prod.id || idx}
+                className="flex flex-col items-center w-30 min-h-30 p-2 bg-blue-50 rounded-lg justify-between"
+              >
+                <div className={`p-2 mb-2 rounded-full bg-gray-500`}>
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                <span className="font-bold text-blue-700 text-center">{prod.producto}</span>
+                <span className="text-sm text-gray-600">Vendidos: {prod.totalVendido}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Ventas recientes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-10">
-        {/* Ventas recientes */}
         <section className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Ventas Recientes</h2>
-          <div className="overflow-y-auto space-x-3 max-h-100">
+          <div className="overflow-y-auto space-y-1 max-h-100">
             {ventasRecientes.length > 0 ? (
               ventasRecientes.map((venta) => (
                 <div
                   key={venta.id}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                  className="flex justify-between items-center p-3 bg-gray-100 rounded"
                 >
                   <div>
                     <p className="font-medium">Venta #{venta.id}</p>
                     <p className="text-xs text-gray-500">
                       {new Date(venta.created_at).toLocaleDateString()}
                     </p>
-                    <p className="text-sm text-gray-600">Productos:</p>
-                    <ul>
-                      {venta.Productos_vendidos &&
-                        venta.Productos_vendidos.map((producto) => (
-                          <li className="flex" key={producto.id}>
-                            {producto.producto}
-                          </li>
-                        ))}
-                    </ul>
                   </div>
                   <div className="flex items-center space-x-2">
                     <p className="font-semibold text-green-600">
@@ -148,14 +165,14 @@ const Dashboard = () => {
         {/* Productos con stock bajo */}
         <section className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Productos con Stock Bajo</h2>
-          <div className="overflow-y-auto space-x-3 max-h-130">
+          <div className="overflow-y-auto space-y-1 max-h-100">
             {productosStockBajo.length > 0 ? (
               productosStockBajo.map((producto, idx) => (
                 <div key={idx} className="flex justify-between items-center p-3 bg-red-50 rounded">
                   <div>
                     <p className="font-medium text-red-900">{producto.nombre}</p>
                     <p className="text-sm text-red-600">
-                      Proveedor: {producto.proveedor || 'Sin asignar'}
+                      Proveedor: {producto.Proveedor.nombre || 'Sin asignar'}
                     </p>
                   </div>
                   <div className="text-right">

@@ -21,7 +21,7 @@ const AgregarProveedor = ({ onSubmit, formData, setFormData, mensaje, resetForm,
                 required
                 value={formData.nombre}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="validar w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -31,9 +31,10 @@ const AgregarProveedor = ({ onSubmit, formData, setFormData, mensaje, resetForm,
               <input
                 type="text"
                 name="contacto"
+                required
                 value={formData.contacto}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="validar w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
