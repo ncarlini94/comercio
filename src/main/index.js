@@ -34,7 +34,10 @@ function createWindow() {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      // El preload no tiene acceso a Node.js; solo se comunica por los canales de window.API.
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false
     }
   })
 

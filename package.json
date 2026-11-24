@@ -19,7 +19,6 @@
     "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
-    "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@sequelize/core": "^7.0.0-alpha.48",
     "@sequelize/sqlite3": "^7.0.0-alpha.48",

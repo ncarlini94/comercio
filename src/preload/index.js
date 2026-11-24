@@ -1,11 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
 
-const api = {}
-
+// El preload corre en sandbox: solo puede usar "electron" (contextBridge, ipcRenderer).
+// La ventana solo accede a los canales listados acá, nunca al ipcRenderer completo.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('API', {
       close: () => ipcRenderer.invoke('close-app'),
 
@@ -64,6 +62,6 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  window.electron = electronAPI
-  window.api = api
+  // Sin aislamiento de contexto no se expone nada: la app requiere contextIsolation.
+  console.error('contextIsolation desactivado: no se expone window.API')
 }
