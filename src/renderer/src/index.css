@@ -1,5 +1,27 @@
 @import 'tailwindcss';
 
+/* El modo oscuro se activa con la clase "dark" en <html> (ver tema.js), no con el sistema operativo. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
+
+  /* Campos de formulario sin color propio: fondo y texto legibles en modo oscuro. */
+  .dark :where(input, select, textarea) {
+    @apply bg-gray-700 text-gray-100;
+  }
+}
+
 input.validar:invalid {
   border: 1px solid red;
 }

@@ -126,7 +126,9 @@ const Pedidos = () => {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2 ps-4 pt-2">
           <Package />
-          <h1 className="text-2xl font-bold text-gray-900">Pedidos a Proveedores</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Pedidos a Proveedores
+          </h1>
         </div>
         <button
           onClick={() => {
@@ -144,47 +146,51 @@ const Pedidos = () => {
       </div>
 
       {/* Lista */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border overflow-hidden dark:border-gray-700">
         <div className="overflow-y-auto max-h-165">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Proveedor
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Fecha
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Total
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {pedidos.map((pedido) => (
-                <tr key={pedido.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">#{pedido.id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{pedido.proveedor}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                <tr key={pedido.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    #{pedido.id}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                    {pedido.proveedor}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                     {new Date(pedido.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-blue-600">
+                  <td className="px-6 py-4 text-sm font-semibold text-blue-600 dark:text-blue-400">
                     ${pedido.total?.toFixed(2)}
                   </td>
                   <td className="px-6 py-4">{pedido.estado}</td>
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => verDetalles(pedido)}
-                      className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
                     >
                       Detalles
                     </button>

@@ -23,18 +23,20 @@ const AgregarPedido = ({
   return (
     <>
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
-          <div className="px-6 py-4 border-b">
+        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
+          <div className="px-6 py-4 border-b dark:border-gray-700">
             <h3 className="text-lg font-semibold">Nuevo Pedido</h3>
           </div>
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-8rem)]">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Proveedor *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Proveedor *
+                </label>
                 <select
                   value={proveedorSeleccionado}
                   onChange={(e) => setProveedorSeleccionado(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
                 >
                   <option value="">Seleccionar proveedor</option>
                   {proveedores.map((p) => (
@@ -46,7 +48,9 @@ const AgregarPedido = ({
               </div>
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-medium text-gray-900">Productos del Pedido</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                    Productos del Pedido
+                  </h4>
                   <button
                     onClick={agregarItem}
                     disabled={!proveedorSeleccionado || productos.length === 0}
@@ -57,11 +61,14 @@ const AgregarPedido = ({
                 </div>
                 <div className="space-y-3">
                   {items.map((item, idx) => (
-                    <div key={idx} className="flex items-center space-x-3 p-3 border rounded-lg">
+                    <div
+                      key={idx}
+                      className="flex items-center space-x-3 p-3 border rounded-lg dark:border-gray-700"
+                    >
                       <select
                         value={item.producto.id}
                         onChange={(e) => actualizarItem(idx, 'producto', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
                       >
                         {productos.map((prod) => (
                           <option key={prod.id} value={prod.id}>
@@ -74,7 +81,7 @@ const AgregarPedido = ({
                         min="1"
                         value={item.cantidad}
                         onChange={(e) => actualizarItem(idx, 'cantidad', e.target.value)}
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-md text-center"
+                        className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-center"
                         placeholder="Cant."
                       />
                       <input
@@ -83,7 +90,7 @@ const AgregarPedido = ({
                         min="0"
                         value={item.costo}
                         onChange={(e) => actualizarItem(idx, 'costo', e.target.value)}
-                        className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                        className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
                         placeholder="Costo"
                       />
                       <span className="w-24 text-right font-medium">
@@ -91,7 +98,7 @@ const AgregarPedido = ({
                       </span>
                       <button
                         onClick={() => eliminarItem(idx)}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                       >
                         ✕
                       </button>
@@ -100,18 +107,20 @@ const AgregarPedido = ({
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nota</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Nota
+                </label>
                 <textarea
                   value={nota}
                   onChange={(e) => setNota(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
                   rows={3}
                 />
               </div>
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 dark:border-gray-700">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-lg font-semibold">Total del Pedido:</span>
-                  <span className="text-2xl font-bold text-blue-600">
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     ${totalPedido().toFixed(2)}
                   </span>
                 </div>
@@ -126,7 +135,7 @@ const AgregarPedido = ({
                       setProveedorSeleccionado('')
                       setNota('')
                     }}
-                    className="flex-1 px-4 py-2 text-gray-700 bg-gray-300 rounded-md hover:opacity-70"
+                    className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-600 rounded-md hover:opacity-70"
                   >
                     Cancelar
                   </button>

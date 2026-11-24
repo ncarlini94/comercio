@@ -124,7 +124,7 @@ const Proveedores = () => {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2 ps-4 pt-2">
           <Users />
-          <h1 className="text-2xl font-bold text-gray-900">Proveedores</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Proveedores</h1>
         </div>
         <button
           onClick={() => {
@@ -139,48 +139,53 @@ const Proveedores = () => {
 
       {/* Buscador */}
       <div className="relative">
-        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           placeholder="Buscar proveedores..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
       {/* Grid de proveedores */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProveedores.map((proveedor) => (
-          <div key={proveedor.id_proveedores} className="bg-white rounded-lg shadow-sm border p-6">
+          <div
+            key={proveedor.id_proveedores}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-6 dark:border-gray-700"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="w-6 h-6 text-blue-600" />
+                  <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-lg font-semibold text-gray-900">{proveedor.nombre}</h3>
-                  <p className="text-sm text-gray-600">{proveedor.contacto}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {proveedor.nombre}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{proveedor.contacto}</p>
                 </div>
               </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => handleEdit(proveedor)}
-                  className="text-blue-600 hover:text-blue-900"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                   title="Editar"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(proveedor.id_proveedores)}
-                  className="text-red-600 hover:text-red-900"
+                  className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                   title="Eliminar"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               {proveedor.mail && (
                 <div className="flex items-center">
                   <span className="font-medium w-16">Mail:</span>

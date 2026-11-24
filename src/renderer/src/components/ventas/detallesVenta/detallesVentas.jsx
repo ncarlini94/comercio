@@ -3,8 +3,8 @@ const DetallesVentas = ({ ventaSeleccionada, setVentaSeleccionada }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg w-full max-w-2xl mx-4">
-          <div className="px-6 py-4 border-b">
+        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl mx-4">
+          <div className="px-6 py-4 border-b dark:border-gray-700">
             <h3 className="text-lg font-semibold">
               Detalles de Venta #{ventaSeleccionada.id} - {ventaSeleccionada.vendedor}
             </h3>
@@ -14,11 +14,11 @@ const DetallesVentas = ({ ventaSeleccionada, setVentaSeleccionada }) => {
             <div className="mb-6">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium text-gray-700">Fecha:</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Fecha:</span>
                   <p>{new Date(ventaSeleccionada.created_at).toLocaleString()}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Total:</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Total:</span>
                   <p className="text-xl font-bold text-green-600">
                     ${ventaSeleccionada.total.toFixed(2)}
                   </p>
@@ -27,22 +27,26 @@ const DetallesVentas = ({ ventaSeleccionada, setVentaSeleccionada }) => {
             </div>
 
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">Productos Vendidos</h4>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">
+                Productos Vendidos
+              </h4>
               <div className="space-y-2">
                 {ventaSeleccionada.Productos_vendidos?.map((item) => (
                   <div
                     key={item.id}
-                    className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                    className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded"
                   >
                     <div>
                       <p className="font-medium">{item.producto}</p>
-                      <p className="text-sm text-gray-600">Cantidad: {item.cantidad}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Cantidad: {item.cantidad}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
                         ${(item.precio_unitario * item.cantidad).toFixed(2)}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         ${item.precio_unitario.toFixed(2)} c/u
                       </p>
                     </div>
@@ -54,7 +58,7 @@ const DetallesVentas = ({ ventaSeleccionada, setVentaSeleccionada }) => {
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setVentaSeleccionada(null)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-900 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
               >
                 Cerrar
               </button>

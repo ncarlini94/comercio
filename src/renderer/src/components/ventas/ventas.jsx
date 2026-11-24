@@ -69,7 +69,7 @@ const Ventas = () => {
       <div className="flex justify-between items-center">
         <div className="flex items-center ps-4 pt-2 gap-2">
           <ShoppingCart />
-          <h1 className="text-2xl font-bold text-gray-900">Ventas</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ventas</h1>
         </div>
         <button
           onClick={() => setMostrarNuevaVenta(true)}
@@ -82,45 +82,47 @@ const Ventas = () => {
       </div>
 
       {/* Lista de ventas */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border overflow-hidden dark:border-gray-700">
         <div className="overflow-y-auto max-h-165">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Fecha
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Total
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Productos
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Metodo de Pago
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   vendedor
                 </th>
-                <th className="px-10 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-10 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {ventas.map((venta) => (
-                <tr key={venta.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">#{venta.id}</td>
-                  <td className="px-4 py-4 text-sm text-gray-900">
+                <tr key={venta.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    #{venta.id}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">
                     {new Date(venta.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-4 text-sm font-semibold text-green-600">
                     ${venta.total.toFixed(2)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                     {venta.Productos_vendidos
                       ? venta.Productos_vendidos.reduce((acc, item) => acc + item.cantidad, 0)
                       : 0}{' '}
@@ -130,18 +132,22 @@ const Ventas = () => {
                       ? 'Producto'
                       : 'Productos'}
                   </td>
-                  <td className="px-10 py-4 text-sm text-gray-900">{venta.metodo}</td>
-                  <td className="px-10 py-4 text-sm text-gray-900">{venta.vendedor}</td>
+                  <td className="px-10 py-4 text-sm text-gray-900 dark:text-gray-100">
+                    {venta.metodo}
+                  </td>
+                  <td className="px-10 py-4 text-sm text-gray-900 dark:text-gray-100">
+                    {venta.vendedor}
+                  </td>
                   <td className="px-11 py-4 text-right">
                     <button
                       onClick={() => cargarDetallesVenta(venta.id)}
-                      className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
                     >
                       <PackageSearch className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(venta.id)}
-                      className="text-blue-600 hover:text-blue-900 ps-4"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 ps-4"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

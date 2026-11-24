@@ -58,14 +58,12 @@ const Dashboard = () => {
     }
   }
 
-  console.log('Productos mas vendidos:', productosMasVendidos)
-
   const TarjetaEstadistica = ({ titulo, valor, icono: Icono, color, sufijo = '' }) => (
-    <div className="bg-white p-6 rounded-lg shadow-sm border">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{titulo}</p>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{titulo}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {valor}
             {sufijo}
           </p>
@@ -81,7 +79,7 @@ const Dashboard = () => {
     <div className="space-y-6 p-6">
       <div className="flex items-center space-x-4 mb-6">
         <BarChart3 />
-        <h1 className="text-2xl font-bold text-gray-900">Panel de Control</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Panel de Control</h1>
       </div>
 
       {/* Estadísticas */}
@@ -113,19 +111,25 @@ const Dashboard = () => {
       </div>
 
       {productosMasVendidos.length > 0 && (
-        <section className="bg-white p-2 rounded-lg shadow-sm border mb-2">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Productos más vendidos</h2>
+        <section className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border mb-2 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            Productos más vendidos
+          </h2>
           <div className="flex items-center justify-between">
             {productosMasVendidos.map((prod, idx) => (
               <div
                 key={prod.id || idx}
-                className="flex flex-col items-center w-30 min-h-30 p-2 bg-blue-50 rounded-lg justify-between"
+                className="flex flex-col items-center w-30 min-h-30 p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg justify-between"
               >
-                <div className={`p-2 mb-2 rounded-full bg-gray-500`}>
+                <div className={`p-2 mb-2 rounded-full bg-blue-500`}>
                   <Package className="w-6 h-6 text-white" />
                 </div>
-                <span className="font-bold text-blue-700 text-center">{prod.producto}</span>
-                <span className="text-sm text-gray-600">Vendidos: {prod.totalVendido}</span>
+                <span className="font-bold text-blue-700 dark:text-blue-300 text-center">
+                  {prod.producto}
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Vendidos: {prod.totalVendido}
+                </span>
               </div>
             ))}
           </div>
@@ -134,18 +138,20 @@ const Dashboard = () => {
 
       {/* Ventas recientes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-10">
-        <section className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Ventas Recientes</h2>
+        <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Ventas Recientes
+          </h2>
           <div className="overflow-y-auto space-y-1 max-h-100">
             {ventasRecientes.length > 0 ? (
               ventasRecientes.map((venta) => (
                 <div
                   key={venta.id}
-                  className="flex justify-between items-center p-3 bg-gray-100 rounded"
+                  className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-900 rounded"
                 >
                   <div>
                     <p className="font-medium">Venta #{venta.id}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {new Date(venta.created_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -157,32 +163,43 @@ const Dashboard = () => {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-4">No hay ventas registradas</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                No hay ventas registradas
+              </p>
             )}
           </div>
         </section>
 
         {/* Productos con stock bajo */}
-        <section className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Productos con Stock Bajo</h2>
+        <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Productos con Stock Bajo
+          </h2>
           <div className="overflow-y-auto space-y-1 max-h-100">
             {productosStockBajo.length > 0 ? (
               productosStockBajo.map((producto, idx) => (
-                <div key={idx} className="flex justify-between items-center p-3 bg-red-50 rounded">
+                <div
+                  key={idx}
+                  className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/30 rounded"
+                >
                   <div>
-                    <p className="font-medium text-red-900">{producto.nombre}</p>
-                    <p className="text-sm text-red-600">
+                    <p className="font-medium text-red-900 dark:text-red-200">{producto.nombre}</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">
                       Proveedor: {producto.Proveedor.nombre || 'Sin asignar'}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-red-600">Stock: {producto.stock}</p>
+                    <p className="font-semibold text-red-600 dark:text-red-400">
+                      Stock: {producto.stock}
+                    </p>
                     <p className="text-xs text-red-500">Minimo: {producto.stock_minimo}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-4">No hay productos con stock bajo</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                No hay productos con stock bajo
+              </p>
             )}
           </div>
         </section>

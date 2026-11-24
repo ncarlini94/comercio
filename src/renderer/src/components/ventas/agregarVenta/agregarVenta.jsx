@@ -79,24 +79,28 @@ const AgregarVenta = ({
   return (
     <>
       <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
-          <div className="px-6 py-4 border-b">
+        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+          <div className="px-6 py-4 border-b dark:border-gray-700">
             <h3 className="text-lg font-semibold">Nueva Venta - {vendedor}</h3>
           </div>
 
           <div className="flex h-[calc(90vh-8rem)]">
             {/* Lista de productos */}
-            <div className="w-1/2 p-6 border-r overflow-y-auto">
-              <h4 className="font-medium text-gray-900 mb-4">Productos Disponibles</h4>
+            <div className="w-1/2 p-6 border-r overflow-y-auto dark:border-gray-700">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
+                Productos Disponibles
+              </h4>
               <div className="space-y-2">
                 {productos.map((producto) => (
                   <div
                     key={producto.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
                     <div>
                       <p className="font-medium">{producto.nombre}</p>
-                      <p className="text-sm text-gray-600">Stock: {producto.stock}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Stock: {producto.stock}
+                      </p>
                       <p className="text-sm font-semibold text-green-600">
                         ${producto.precio.toFixed(2)}
                       </p>
@@ -115,21 +119,25 @@ const AgregarVenta = ({
 
             {/* Carrito */}
             <div className="w-1/2 p-6 flex flex-col">
-              <h4 className="font-medium text-gray-900 mb-4">Carrito de Venta</h4>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
+                Carrito de Venta
+              </h4>
 
               <div className="flex-1 overflow-y-auto">
                 {carrito.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No hay productos en el carrito</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                    No hay productos en el carrito
+                  </p>
                 ) : (
                   <div className="space-y-3">
                     {carrito.map((item) => (
                       <div
                         key={item.producto.id}
-                        className="flex items-center justify-between p-3 border rounded-lg"
+                        className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700"
                       >
                         <div className="flex-1">
                           <p className="font-medium">{item.producto.nombre}</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
                             ${item.producto.precio.toFixed(2)} c/u
                           </p>
                         </div>
@@ -142,11 +150,11 @@ const AgregarVenta = ({
                             onChange={(e) =>
                               actualizarCantidadCarrito(item.producto.id, parseInt(e.target.value))
                             }
-                            className="w-16 px-2 py-1 border rounded text-center"
+                            className="w-16 px-2 py-1 border rounded text-center dark:border-gray-700"
                           />
                           <button
                             onClick={() => actualizarCantidadCarrito(item.producto.id, 0)}
-                            className={`text-red-600 hover:text-red-800`}
+                            className={`text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -158,13 +166,13 @@ const AgregarVenta = ({
               </div>
 
               <div className="mt-4 space-y-4">
-                <div className="border-t pt-4">
+                <div className="border-t pt-4 dark:border-gray-700">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-semibold">Metodo de pago:</span>
                     <select
                       value={metodo}
                       onChange={(e) => setMetodo(e.target.value)}
-                      className="border rounded px-2 py-1"
+                      className="border rounded px-2 py-1 dark:border-gray-700"
                     >
                       {METODOS_PAGO.map((m) => (
                         <option key={m} value={m}>
