@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { manejar } from '../services/canales.js'
 import {
   agregarVenta,
   eliminarVenta,
@@ -6,7 +6,7 @@ import {
   obtenerTodasLasVentas
 } from '../controllers/ventas.controller'
 
-ipcMain.handle('obtenerTodasLasVentas', async () => {
+manejar('obtenerTodasLasVentas', async () => {
   try {
     const ventas = await obtenerTodasLasVentas()
     return ventas
@@ -16,7 +16,7 @@ ipcMain.handle('obtenerTodasLasVentas', async () => {
   }
 })
 
-ipcMain.handle('obtenerProductosVenta', async (event, id) => {
+manejar('obtenerProductosVenta', async (event, id) => {
   try {
     const productos = await obtenerProductosVenta(id)
     return productos
@@ -26,7 +26,7 @@ ipcMain.handle('obtenerProductosVenta', async (event, id) => {
   }
 })
 
-ipcMain.handle('agregarVenta', async (event, venta) => {
+manejar('agregarVenta', async (event, venta) => {
   try {
     const nuevo = await agregarVenta(venta)
     return nuevo
@@ -36,7 +36,7 @@ ipcMain.handle('agregarVenta', async (event, venta) => {
   }
 })
 
-ipcMain.handle('eliminarVenta', async (event, id) => {
+manejar('eliminarVenta', async (event, id) => {
   try {
     const resultado = await eliminarVenta(id)
     return resultado

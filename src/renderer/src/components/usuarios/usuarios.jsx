@@ -1,22 +1,39 @@
-import { Plus, Search, User, UserCheck, UserLock } from 'lucide-react'
+import { Pencil, Plus, Search, User, UserCheck, UserLock } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import AgregarUsuario from './agregarUsuario/agregarUsuario'
+import EditarUsuario from './editarUsuario/editarUsuario'
+import { usePermisos } from '../../sesion'
 
 const FORM_INICIAL = { usuario: '', mail: '', password: '', rol: '' }
 
 const Usuarios = () => {
+  const { sesion, puede, recargarSesion } = usePermisos()
   const [usuarios, setUsuarios] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [formData, setFormData] = useState(FORM_INICIAL)
   const [mensaje, setMensaje] = useState('')
+  const [editando, setEditando] = useState(null)
+  // Solo los roles que la sesión puede asignar; el proceso principal también lo valida.
+  const [rolesDisponibles, setRolesDisponibles] = useState([])
 
-  // Solo para mostrar opciones: el proceso principal valida los permisos reales.
-  const rolActual = localStorage.getItem('Rol')
-  const rolesDisponibles =
-    rolActual === 'Propietario'
-      ? ['Propietario', 'Administrador', 'Vendedor']
-      : ['Administrador', 'Vendedor']
+  useEffect(() => {
+    window.API.obtenerRoles().then((respuesta) => {
+      if (respuesta.success) {
+        setRolesDisponibles(respuesta.roles.filter((r) => r.asignable).map((r) => r.nombre))
+      }
+    })
+  }, [])
+
+  const guardarEdicion = async (id, cambios) => {
+    const respuesta = await window.API.editarUsuario(id, cambios)
+    if (respuesta.success) {
+      setEditando(null)
+      obtenerUsuarios()
+      if (id === sesion?.id_usuario) recargarSesion()
+    }
+    return respuesta
+  }
 
   const cerrarFormulario = () => {
     setMostrarFormulario(false)
@@ -67,15 +84,27 @@ const Usuarios = () => {
             <User />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Usuarios</h1>
           </div>
-          <button
-            onClick={() => setMostrarFormulario(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 me-4"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo usuario
-          </button>
+          {puede('usuarios.crear') && (
+            <button
+              onClick={() => setMostrarFormulario(true)}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 me-4"
+            >
+              <Plus className="w-4 h-4" />
+              Nuevo usuario
+            </button>
+          )}
         </div>
       </div>
+
+      {editando && (
+        <EditarUsuario
+          usuario={editando}
+          rolesAsignables={rolesDisponibles}
+          esUnoMismo={editando.id_usuario === sesion?.id_usuario}
+          onGuardar={guardarEdicion}
+          onCancelar={() => setEditando(null)}
+        />
+      )}
 
       {mostrarFormulario && (
         <AgregarUsuario
@@ -117,6 +146,9 @@ const Usuarios = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Estado
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -144,6 +176,17 @@ const Usuarios = () => {
                         <UserCheck className="font-bold inline-block w-5 h-5 text-green-500 ml-2" />
                       ) : (
                         <UserLock className="font-bold inline-block w-5 h-5 text-red-500 ml-2" />
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {usuario.editable && (
+                        <button
+                          onClick={() => setEditando(usuario)}
+                          title="Editar usuario"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
                       )}
                     </td>
                   </tr>

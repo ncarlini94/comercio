@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types'
+import { usePermisos } from '../../../sesion'
 const EditarPedido = ({
   pedidoSeleccionado,
   handleSubmit,
@@ -7,7 +8,8 @@ const EditarPedido = ({
   productosSeleccionado,
   setPedidoSeleccionado
 }) => {
-  console.log('Pedido Seleccionado:', pedidoSeleccionado)
+  const { puede } = usePermisos()
+  const puedeCambiarEstado = puede('pedidos.cambiarEstado')
   return (
     <>
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -43,6 +45,7 @@ const EditarPedido = ({
                       <select
                         value={estado}
                         onChange={(e) => setEstado(e.target.value)}
+                        disabled={!puedeCambiarEstado}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="Pendiente">Pendiente</option>
@@ -97,12 +100,14 @@ const EditarPedido = ({
               >
                 Cerrar
               </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {pedidoSeleccionado ? 'Actualizar' : 'Agregar'}
-              </button>
+              {puedeCambiarEstado && (
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {pedidoSeleccionado ? 'Actualizar' : 'Agregar'}
+                </button>
+              )}
             </div>
           </form>
         </div>

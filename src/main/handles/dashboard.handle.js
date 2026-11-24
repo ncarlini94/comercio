@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { manejar } from '../services/canales.js'
 import {
   obtenerTotalProductos,
   obtenerUltimasVentas,
@@ -9,7 +9,7 @@ import {
   obtenerProductosMasVendidos
 } from '../controllers/dashboard.Controller'
 
-ipcMain.handle('obtenerTotalProductos', async () => {
+manejar('obtenerTotalProductos', async () => {
   try {
     const ventas = await obtenerTotalProductos()
     return ventas
@@ -19,7 +19,7 @@ ipcMain.handle('obtenerTotalProductos', async () => {
   }
 })
 
-ipcMain.handle('obtenerTotalProveedores', async () => {
+manejar('obtenerTotalProveedores', async () => {
   try {
     const ventas = await obtenerTotalProveedores()
     return ventas
@@ -29,7 +29,7 @@ ipcMain.handle('obtenerTotalProveedores', async () => {
   }
 })
 
-ipcMain.handle('obtenerTotalVentasHoy', async (event, fecha) => {
+manejar('obtenerTotalVentasHoy', async (event, fecha) => {
   try {
     const ventas = await obtenerTotalVentasHoy(fecha)
     return ventas
@@ -39,7 +39,7 @@ ipcMain.handle('obtenerTotalVentasHoy', async (event, fecha) => {
   }
 })
 
-ipcMain.handle('obtenerTotalStockBajo', async () => {
+manejar('obtenerTotalStockBajo', async () => {
   try {
     const ventas = await obtenerTotalStockBajo()
     return ventas
@@ -49,7 +49,7 @@ ipcMain.handle('obtenerTotalStockBajo', async () => {
   }
 })
 
-ipcMain.handle('obtenerUltimasVentas', async () => {
+manejar('obtenerUltimasVentas', async () => {
   try {
     const ventas = await obtenerUltimasVentas()
     return ventas
@@ -59,7 +59,7 @@ ipcMain.handle('obtenerUltimasVentas', async () => {
   }
 })
 
-ipcMain.handle('obtenerProductosStockBajo', async () => {
+manejar('obtenerProductosStockBajo', async () => {
   try {
     const ventas = await obtenerProductosStockBajo()
     return ventas
@@ -69,7 +69,7 @@ ipcMain.handle('obtenerProductosStockBajo', async () => {
   }
 })
 
-ipcMain.handle('obtenerProductosMasVendidos', async () => {
+manejar('obtenerProductosMasVendidos', async () => {
   try {
     const productosMasVendidos = await obtenerProductosMasVendidos()
     return productosMasVendidos

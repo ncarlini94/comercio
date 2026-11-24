@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { manejar } from '../services/canales.js'
 import {
   actualizarPedido,
   agregarPedido,
@@ -7,7 +7,7 @@ import {
   obtenerTodosLosProductosPedidos
 } from '../controllers/pedidos.Controller'
 
-ipcMain.handle('obtenerTodosLosPedidos', async () => {
+manejar('obtenerTodosLosPedidos', async () => {
   try {
     const pedidos = await obtenerTodosLosPedidos()
     return pedidos
@@ -17,7 +17,7 @@ ipcMain.handle('obtenerTodosLosPedidos', async () => {
   }
 })
 
-ipcMain.handle('obtenerTodosLosProductosPedidos', async (event, id) => {
+manejar('obtenerTodosLosProductosPedidos', async (event, id) => {
   try {
     const productos = await obtenerTodosLosProductosPedidos(id)
     return productos
@@ -27,7 +27,7 @@ ipcMain.handle('obtenerTodosLosProductosPedidos', async (event, id) => {
   }
 })
 
-ipcMain.handle('agregarPedido', async (event, pedido) => {
+manejar('agregarPedido', async (event, pedido) => {
   try {
     const nuevo = await agregarPedido(pedido)
     return nuevo
@@ -37,7 +37,7 @@ ipcMain.handle('agregarPedido', async (event, pedido) => {
   }
 })
 
-ipcMain.handle('actualizarPedido', async (event, id, pedido) => {
+manejar('actualizarPedido', async (event, id, pedido) => {
   try {
     const resultado = await actualizarPedido(id, pedido)
     return resultado
@@ -47,7 +47,7 @@ ipcMain.handle('actualizarPedido', async (event, id, pedido) => {
   }
 })
 
-ipcMain.handle('eliminarPedido', async (event, id) => {
+manejar('eliminarPedido', async (event, id) => {
   try {
     const resultado = await eliminarPedido(id)
     return resultado

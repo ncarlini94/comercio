@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Plus, Trash2, PackageSearch, ShoppingCart } from 'lucide-react'
 import AgregarVenta from './agregarVenta/agregarVenta'
 import DetallesVentas from './detallesVenta/detallesVentas'
+import { usePermisos } from '../../sesion'
 
 const Ventas = () => {
+  const { puede } = usePermisos()
   const [ventas, setVentas] = useState([])
   const [productos, setProductos] = useState([])
   const [mostrarNuevaVenta, setMostrarNuevaVenta] = useState(false)
@@ -33,7 +35,8 @@ const Ventas = () => {
   const cargarProductos = async () => {
     try {
       const resultado = await window.API.obtenerTodosLosProductos()
-      setProductos(resultado)
+      // Sin permiso para crear ventas no llega una lista.
+      setProductos(Array.isArray(resultado) ? resultado : [])
     } catch (error) {
       console.error('Error al cargar productos:', error)
     }
@@ -71,14 +74,16 @@ const Ventas = () => {
           <ShoppingCart />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ventas</h1>
         </div>
-        <button
-          onClick={() => setMostrarNuevaVenta(true)}
-          disabled={!productos.length}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva Venta
-        </button>
+        {puede('ventas.crear') && (
+          <button
+            onClick={() => setMostrarNuevaVenta(true)}
+            disabled={!productos.length}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
+          >
+            <Plus className="w-4 h-4" />
+            Nueva Venta
+          </button>
+        )}
       </div>
 
       {/* Lista de ventas */}
@@ -145,12 +150,14 @@ const Ventas = () => {
                     >
                       <PackageSearch className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(venta.id)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 ps-4"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {puede('ventas.anular') && (
+                      <button
+                        onClick={() => handleDelete(venta.id)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 ps-4"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

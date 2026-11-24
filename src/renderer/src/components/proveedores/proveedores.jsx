@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Search, User, Users } from 'lucide-react'
 import AgregarProveedor from './agregarProveedor/agregarProveedor'
 import EditarProveedor from './editarProveedor/editarProveedor'
+import { usePermisos } from '../../sesion'
 
 const Proveedores = () => {
+  const { puede } = usePermisos()
   const [proveedores, setProveedores] = useState([])
   const [mostrarEditar, setMostrarEditar] = useState(false)
   const [editingProveedor, setEditingProveedor] = useState(null)
@@ -126,15 +128,17 @@ const Proveedores = () => {
           <Users />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Proveedores</h1>
         </div>
-        <button
-          onClick={() => {
-            setMostrarNuevo(true)
-          }}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Agregar Proveedor
-        </button>
+        {puede('proveedores.crear') && (
+          <button
+            onClick={() => {
+              setMostrarNuevo(true)
+            }}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Agregar Proveedor
+          </button>
+        )}
       </div>
 
       {/* Buscador */}
@@ -169,20 +173,24 @@ const Proveedores = () => {
                 </div>
               </div>
               <div className="flex space-x-2">
-                <button
-                  onClick={() => handleEdit(proveedor)}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
-                  title="Editar"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(proveedor.id_proveedores)}
-                  className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                  title="Eliminar"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {puede('proveedores.editar') && (
+                  <button
+                    onClick={() => handleEdit(proveedor)}
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                    title="Editar"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                )}
+                {puede('proveedores.eliminar') && (
+                  <button
+                    onClick={() => handleDelete(proveedor.id_proveedores)}
+                    className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                    title="Eliminar"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">

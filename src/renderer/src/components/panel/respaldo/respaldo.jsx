@@ -1,6 +1,7 @@
 import { CalendarClock, FolderOpen, Save } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import Restaurar from './restaurar'
+import { usePermisos } from '../../../sesion'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const ACTUALIZAR_CADA_MS = 60 * 1000
@@ -13,7 +14,7 @@ const tarjeta =
 const campo =
   'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
 
-export default function Respaldo() {
+function CopiasDeSeguridad() {
   const [estado, setEstado] = useState(null)
   const [programacion, setProgramacion] = useState(null)
   const [cargando, setCargando] = useState(null)
@@ -90,7 +91,6 @@ export default function Respaldo() {
   }
 
   const ocupado = cargando !== null
-  const esPropietario = localStorage.getItem('Rol') === 'Propietario'
 
   return (
     <div className="space-y-4">
@@ -240,9 +240,17 @@ export default function Respaldo() {
           {mensaje.texto}
         </div>
       )}
+    </div>
+  )
+}
 
-      {/* Solo se muestra al Propietario; el proceso principal también lo valida. */}
-      {esPropietario && <Restaurar />}
+// Cada parte se muestra según los permisos; el proceso principal también los valida.
+export default function Respaldo() {
+  const { puede } = usePermisos()
+  return (
+    <div className="space-y-4">
+      {puede('configuracion.respaldos') && <CopiasDeSeguridad />}
+      {puede('configuracion.restaurar') && <Restaurar />}
     </div>
   )
 }

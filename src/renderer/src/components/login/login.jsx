@@ -33,9 +33,7 @@ const Login = () => {
       const response = await window.API.login({ mail, password })
       if (response.success === true) {
         setMensaje('Login exitoso')
-        localStorage.setItem('token', response.token)
         localStorage.setItem('usuario', response.usuario.usuario)
-        localStorage.setItem('Rol', response.usuario.rol)
         if (mailRecordar === true) {
           localStorage.setItem('MailGuardado', mail)
         } else {

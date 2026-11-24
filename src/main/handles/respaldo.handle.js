@@ -1,4 +1,5 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
+import { manejar } from '../services/canales.js'
 import {
   carpetaRespaldoConfigurada,
   crearRespaldo,
@@ -11,15 +12,8 @@ import {
   cancelarRestauracion,
   restaurarRespaldo
 } from '../services/respaldo/restauracion.js'
-import { sesionTieneRol } from '../services/sesion.js'
 
-const ROLES_CONFIGURACION = ['Propietario', 'Administrador']
-// Restaurar reemplaza todos los datos: solo el Propietario puede hacerlo.
-const ROLES_RESTAURACION = ['Propietario']
-const SIN_PERMISOS = { success: false, message: 'No tiene permisos para esta acción' }
-
-ipcMain.handle('elegirRespaldoParaRestaurar', async (event) => {
-  if (!sesionTieneRol(ROLES_RESTAURACION)) return SIN_PERMISOS
+manejar('elegirRespaldoParaRestaurar', async (event) => {
   const { canceled, filePaths } = await dialog.showOpenDialog(
     BrowserWindow.fromWebContents(event.sender),
     {
@@ -33,23 +27,20 @@ ipcMain.handle('elegirRespaldoParaRestaurar', async (event) => {
   return analizarRespaldo(filePaths[0])
 })
 
-ipcMain.handle('restaurarRespaldo', async () => {
-  if (!sesionTieneRol(ROLES_RESTAURACION)) return SIN_PERMISOS
+manejar('restaurarRespaldo', async () => {
   return restaurarRespaldo()
 })
 
-ipcMain.handle('cancelarRestauracion', () => cancelarRestauracion())
+manejar('cancelarRestauracion', () => cancelarRestauracion())
 
 // Borra la copia temporal analizada si se cierra la app sin restaurar.
 app.on('will-quit', () => cancelarRestauracion())
 
-ipcMain.handle('obtenerRespaldo', () => {
-  if (!sesionTieneRol(ROLES_CONFIGURACION)) return SIN_PERMISOS
+manejar('obtenerRespaldo', () => {
   return { success: true, estado: obtenerEstadoRespaldo() }
 })
 
-ipcMain.handle('guardarRespaldo', (_event, datos) => {
-  if (!sesionTieneRol(ROLES_CONFIGURACION)) return SIN_PERMISOS
+manejar('guardarRespaldo', (_event, datos) => {
   try {
     return guardarConfigRespaldo(datos ?? {})
   } catch (error) {
@@ -58,8 +49,7 @@ ipcMain.handle('guardarRespaldo', (_event, datos) => {
   }
 })
 
-ipcMain.handle('elegirCarpetaRespaldo', async (event) => {
-  if (!sesionTieneRol(ROLES_CONFIGURACION)) return SIN_PERMISOS
+manejar('elegirCarpetaRespaldo', async (event) => {
   const { canceled, filePaths } = await dialog.showOpenDialog(
     BrowserWindow.fromWebContents(event.sender),
     {
@@ -71,7 +61,6 @@ ipcMain.handle('elegirCarpetaRespaldo', async (event) => {
   return guardarCarpetaRespaldo(filePaths[0])
 })
 
-ipcMain.handle('crearRespaldo', async () => {
-  if (!sesionTieneRol(ROLES_CONFIGURACION)) return SIN_PERMISOS
+manejar('crearRespaldo', async () => {
   return crearRespaldo('manual')
 })

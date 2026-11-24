@@ -23,7 +23,8 @@ const Usuarios = sequelize.define(
       unique: true
     },
     rol: {
-      type: DataTypes.ENUM('Propietario', 'Administrador', 'Vendedor'),
+      // Nombre del rol (tabla Roles). En SQLite la columna ya era TEXT, no hace falta migrar.
+      type: DataTypes.STRING,
       allowNull: false
     },
     estado: {

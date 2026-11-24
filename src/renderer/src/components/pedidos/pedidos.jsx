@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Package, Plus } from 'lucide-react'
 import AgregarPedido from './agregarPedido/agregarPedido'
 import EditarPedido from './editarPedido/editarPedido'
+import { usePermisos } from '../../sesion'
 
 const Pedidos = () => {
+  const { puede } = usePermisos()
   const [pedidos, setPedidos] = useState([])
   const [proveedores, setProveedores] = useState([])
   const [productos, setProductos] = useState([])
@@ -130,19 +132,21 @@ const Pedidos = () => {
             Pedidos a Proveedores
           </h1>
         </div>
-        <button
-          onClick={() => {
-            setProveedorSeleccionado('')
-            setItems([])
-            setNota('')
-            setMostrarNuevo(true)
-          }}
-          disabled={proveedores?.length === 0}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
-        >
-          <Plus className="w-4 h-4" />
-          Nuevo Pedido
-        </button>
+        {puede('pedidos.crear') && (
+          <button
+            onClick={() => {
+              setProveedorSeleccionado('')
+              setItems([])
+              setNota('')
+              setMostrarNuevo(true)
+            }}
+            disabled={proveedores?.length === 0}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Pedido
+          </button>
+        )}
       </div>
 
       {/* Lista */}

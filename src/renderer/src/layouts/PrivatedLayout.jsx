@@ -1,62 +1,63 @@
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Navbar from '../components/navbar/navbar'
-import { useState, useEffect } from 'react'
+import { SECCIONES, SesionContext } from '../sesion'
+
+const tieneAcceso = (sesion, seccion) => seccion.permisos.some((p) => sesion.permisos.includes(p))
 
 export default function PrivatedLayout() {
-  const sectionByPath = {
-    '/': 'dashboard',
-    '/inventario': 'inventario',
-    '/proveedores': 'proveedores',
-    '/ventas': 'ventas',
-    '/pedidos': 'pedidos',
-    '/usuarios': 'usuarios',
-    '/configuracion': 'configuracion'
-  }
-
   const location = useLocation()
   const navigate = useNavigate()
-  // null = verificando, true/false = resultado de la sesión en el proceso principal
-  const [isAuthenticated, setIsAuthenticated] = useState(null)
-  const [activeSection, setActiveSection] = useState(
-    sectionByPath[location.pathname] || 'dashboard'
-  )
+  // undefined = verificando, null = sin sesión, objeto = sesión del proceso principal
+  const [sesion, setSesion] = useState(undefined)
 
-  useEffect(() => {
-    window.API.obtenerSesion().then((sesion) => {
-      if (sesion) {
-        localStorage.setItem('usuario', sesion.usuario)
-        localStorage.setItem('Rol', sesion.rol)
-        setIsAuthenticated(true)
-      } else {
-        localStorage.removeItem('token')
-        localStorage.removeItem('usuario')
-        localStorage.removeItem('Rol')
-        setIsAuthenticated(false)
-      }
-    })
+  const recargarSesion = useCallback(async () => {
+    const actual = await window.API.obtenerSesion()
+    if (actual) {
+      // Solo para mostrar el nombre (por ejemplo, en Ventas); los permisos vienen de la sesión.
+      localStorage.setItem('usuario', actual.usuario)
+    } else {
+      localStorage.removeItem('usuario')
+    }
+    setSesion(actual ?? null)
+    return actual
   }, [])
 
   useEffect(() => {
-    setActiveSection(sectionByPath[location.pathname] || 'dashboard')
-  }, [location.pathname])
+    recargarSesion()
+  }, [recargarSesion])
 
-  const handleSectionChange = (sectionId) => {
-    setActiveSection(sectionId)
-    const path = Object.entries(sectionByPath).find(([, id]) => id === sectionId)?.[0]
-    if (path) navigate(path)
+  const contexto = useMemo(() => ({ sesion, recargarSesion }), [sesion, recargarSesion])
+  const seccionActual = SECCIONES.find((s) => s.path === location.pathname)
+
+  if (sesion === undefined) return null
+  if (sesion === null) return <Navigate to="/login" />
+
+  // Ruta sin permiso: se redirige a la primera sección habilitada.
+  if (seccionActual && !tieneAcceso(sesion, seccionActual)) {
+    const primera = SECCIONES.find((s) => tieneAcceso(sesion, s))
+    if (primera) return <Navigate to={primera.path} replace />
+    return (
+      <SesionContext.Provider value={contexto}>
+        <Navbar activeSection="" onSectionChange={() => {}}>
+          <p className="p-6 text-gray-600 dark:text-gray-400">
+            Su rol no tiene acceso a ninguna sección. Consulte al administrador.
+          </p>
+        </Navbar>
+      </SesionContext.Provider>
+    )
   }
 
-  if (isAuthenticated === null) {
-    return null
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />
+  const irASeccion = (id) => {
+    const seccion = SECCIONES.find((s) => s.id === id)
+    if (seccion) navigate(seccion.path)
   }
 
   return (
-    <Navbar activeSection={activeSection} onSectionChange={handleSectionChange}>
-      <Outlet />
-    </Navbar>
+    <SesionContext.Provider value={contexto}>
+      <Navbar activeSection={seccionActual?.id ?? ''} onSectionChange={irASeccion}>
+        <Outlet />
+      </Navbar>
+    </SesionContext.Provider>
   )
 }

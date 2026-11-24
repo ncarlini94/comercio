@@ -1,22 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Package,
-  Users,
-  ShoppingCart,
-  FileText,
-  BarChart3,
-  Truck,
-  Settings,
-  Moon,
-  Sun
-} from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import PropTypes from 'prop-types'
 import { CLAVE_TEMA, cambiarTema, temaActual } from '../../tema'
+import { SECCIONES, usePermisos } from '../../sesion'
 
 const Navbar = ({ children, activeSection, onSectionChange }) => {
   const navigate = useNavigate()
-  const rol = localStorage.getItem('Rol')
+  const { sesion, puedeAlguno } = usePermisos()
   const [tema, setTema] = useState(temaActual)
 
   const alternarTema = () => {
@@ -24,17 +15,9 @@ const Navbar = ({ children, activeSection, onSectionChange }) => {
     cambiarTema(nuevo)
     setTema(nuevo)
   }
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/' },
-    { id: 'ventas', label: 'Ventas', icon: ShoppingCart, path: '/ventas' },
-    { id: 'inventario', label: 'Inventario', icon: Package, path: '/inventario' },
-    { id: 'proveedores', label: 'Proveedores', icon: Truck, path: '/proveedores' },
-    { id: 'pedidos', label: 'Pedidos', icon: FileText, path: '/pedidos' }
-  ]
-  const adminItems = [
-    { id: 'usuarios', label: 'Usuarios', icon: Users, path: '/usuarios' },
-    { id: 'configuracion', label: 'Configuración', icon: Settings, path: '/configuracion' }
-  ]
+  const visibles = SECCIONES.filter((s) => puedeAlguno(s.permisos))
+  const menuItems = visibles.filter((s) => !s.admin)
+  const adminItems = visibles.filter((s) => s.admin)
 
   const handleLogout = async () => {
     await window.API.cerrarSesion()
@@ -52,9 +35,7 @@ const Navbar = ({ children, activeSection, onSectionChange }) => {
       <div className="w-64 bg-white dark:bg-gray-800 shadow-lg flex flex-col justify-between">
         <div>
           <div className="p-6 border-b dark:border-gray-700 flex items-center justify-between gap-2">
-            <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-              Comercio
-            </h1>
+            <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">Comercio</h1>
             <button
               onClick={alternarTema}
               title={tema === 'oscuro' ? 'Modo oscuro activo' : 'Modo claro activo'}
@@ -89,36 +70,44 @@ const Navbar = ({ children, activeSection, onSectionChange }) => {
                 )
               })}
             </div>
-            <div className="p-4 border-t dark:border-gray-700">
-              <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200">Administrar</h1>
-            </div>
+            {adminItems.length > 0 && (
+              <div className="p-4 border-t dark:border-gray-700">
+                <h1 className="text-lg font-bold text-gray-800 dark:text-gray-200">Administrar</h1>
+              </div>
+            )}
             <div>
-              {(rol === 'Propietario' || rol === 'Administrador') &&
-                adminItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() =>
-                        onSectionChange
-                          ? onSectionChange(item.id)
-                          : (window.location.pathname = item.path)
-                      }
-                      className={`w-full flex items-center px-6 py-3 text-left transition-colors ${
-                        activeSection === item.id
-                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5 mr-3" />
-                      {item.label}
-                    </button>
-                  )
-                })}
+              {adminItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() =>
+                      onSectionChange
+                        ? onSectionChange(item.id)
+                        : (window.location.pathname = item.path)
+                    }
+                    className={`w-full flex items-center px-6 py-3 text-left transition-colors ${
+                      activeSection === item.id
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 mr-3" />
+                    {item.label}
+                  </button>
+                )
+              })}
             </div>
           </nav>
         </div>
         <div className="p-6">
+          {sesion && (
+            <p className="mb-3 text-sm text-gray-600 dark:text-gray-400 truncate">
+              <span className="font-medium text-gray-800 dark:text-gray-200">{sesion.usuario}</span>
+              {' · '}
+              {sesion.rol}
+            </p>
+          )}
           <button
             className="w-full bg-red-600/80 text-white px-4 py-2 rounded hover:bg-red-700 transition"
             onClick={handleLogout}

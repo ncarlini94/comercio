@@ -1,13 +1,21 @@
-import { ipcMain } from 'electron'
 import {
+  editarUsuario,
   existenUsuarios,
   login,
   obtenerUsuarios,
   registro
 } from './../controllers/usuarios.controller'
-import { cerrarSesion, obtenerSesion } from '../services/sesion.js'
+import {
+  actualizarRol,
+  crearRol,
+  eliminarRol,
+  obtenerCatalogoPermisos,
+  obtenerRoles
+} from '../controllers/roles.controller.js'
+import { cerrarSesion, sesionConPermisos } from '../services/sesion.js'
+import { manejar } from '../services/canales.js'
 
-ipcMain.handle('existenUsuarios', async () => {
+manejar('existenUsuarios', async () => {
   try {
     return await existenUsuarios()
   } catch (error) {
@@ -17,41 +25,54 @@ ipcMain.handle('existenUsuarios', async () => {
   }
 })
 
-ipcMain.handle('obtenerSesion', () => obtenerSesion())
+manejar('obtenerSesion', () => sesionConPermisos())
 
-ipcMain.handle('cerrarSesion', () => {
+manejar('cerrarSesion', () => {
   cerrarSesion()
   return { success: true }
 })
 
-ipcMain.handle('login', async (event, data) => {
+manejar('login', async (event, data) => {
   try {
-    const { mail, password } = data
-    const result = await login(mail, password)
-    return result
+    const { mail, password } = data ?? {}
+    return await login(mail, password)
   } catch (error) {
     console.error('Error en el login:', error)
     return { success: false, message: 'Error en el login' }
   }
 })
 
-ipcMain.handle('registro', async (event, data) => {
+manejar('registro', async (event, data) => {
   try {
-    const { usuario, mail, password, rol, estado } = data
-    const result = await registro(usuario, mail, password, rol, estado)
-    return result
+    const { usuario, mail, password, rol, estado } = data ?? {}
+    return await registro(usuario, mail, password, rol, estado)
   } catch (error) {
     console.error('Error en el registro:', error)
     return { success: false, message: 'Error en el registro' }
   }
 })
 
-ipcMain.handle('obtenerUsuarios', async () => {
+manejar('obtenerUsuarios', async () => {
   try {
-    const usuarios = await obtenerUsuarios()
-    return usuarios
+    return await obtenerUsuarios()
   } catch (error) {
     console.error('Error al obtener usuarios:', error)
     return { success: false, message: 'Error al obtener usuarios' }
   }
 })
+
+manejar('editarUsuario', (event, id, cambios) => editarUsuario(id, cambios))
+
+manejar('obtenerRoles', async () => {
+  try {
+    return { success: true, roles: await obtenerRoles() }
+  } catch (error) {
+    console.error('Error al obtener roles:', error)
+    return { success: false, message: 'Error al obtener los roles' }
+  }
+})
+
+manejar('obtenerCatalogoPermisos', () => ({ success: true, permisos: obtenerCatalogoPermisos() }))
+manejar('crearRol', (event, datos) => crearRol(datos))
+manejar('actualizarRol', (event, id, datos) => actualizarRol(id, datos))
+manejar('eliminarRol', (event, id) => eliminarRol(id))

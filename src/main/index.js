@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -10,8 +10,8 @@ import './models/pedidos.model.js'
 import './models/usuarios.model.js'
 import './models/ventas.model.js'
 import './models/productosVendidos.model.js'
-import './models/pedidos.model.js'
 import './models/productosPedidos.model.js'
+import './models/roles.model.js'
 
 import './handles/usuarios.handle.js'
 import './handles/inventario.handle.js'
@@ -23,6 +23,8 @@ import './handles/importar.handle.js'
 import './handles/respaldo.handle.js'
 import { iniciarProgramadorRespaldo } from './services/respaldo/respaldo.js'
 import { migrarContraseniasAnteriores } from './controllers/usuarios.controller.js'
+import { inicializarRoles } from './services/permisos.js'
+import { manejar } from './services/canales.js'
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -67,6 +69,8 @@ app.whenReady().then(async () => {
     .catch((error) => {
       console.error('Error al sincronizar la base de datos:', error)
     })
+  // Crea los roles por defecto si faltan y carga sus permisos en memoria.
+  await inicializarRoles().catch((error) => console.error('Error al inicializar roles:', error))
   // Contraseñas del formato anterior (cifradas por equipo) → bcrypt. Si falla, el login
   // igual las acepta y las convierte al iniciar sesión.
   await migrarContraseniasAnteriores().catch((error) =>
@@ -75,8 +79,6 @@ app.whenReady().then(async () => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
-
-  ipcMain.on('ping', () => console.log('pong'))
 
   createWindow()
 
@@ -88,7 +90,7 @@ app.whenReady().then(async () => {
   })
 })
 
-ipcMain.handle('close-app', () => {
+manejar('close-app', () => {
   app.quit()
 })
 

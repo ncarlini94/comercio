@@ -1,16 +1,14 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
+import { manejar, SIN_PERMISOS } from '../services/canales.js'
+import { sesionTienePermiso } from '../services/sesion.js'
 import { join } from 'node:path'
 import importar from '../services/import/importar.js'
 import exportar from '../services/export/exportar.js'
-import { sesionTieneRol } from '../services/sesion.js'
 
-const ROLES_CONFIGURACION = ['Propietario', 'Administrador']
-const SIN_PERMISOS = { success: false, message: 'No tiene permisos para esta acción' }
 const FILTRO_EXCEL = [{ name: 'Excel', extensions: ['xlsx'] }]
 
 // El diálogo de archivos se abre en el proceso principal: el renderer nunca elige una ruta arbitraria.
-ipcMain.handle('importar', async (event, seccion) => {
-  if (!sesionTieneRol(ROLES_CONFIGURACION)) return SIN_PERMISOS
+manejar('importar', async (event, seccion) => {
   try {
     const { canceled, filePaths } = await dialog.showOpenDialog(
       BrowserWindow.fromWebContents(event.sender),
@@ -27,8 +25,11 @@ ipcMain.handle('importar', async (event, seccion) => {
   }
 })
 
-ipcMain.handle('exportar', async (event, seccion) => {
-  if (!sesionTieneRol(ROLES_CONFIGURACION)) return SIN_PERMISOS
+manejar('exportar', async (event, seccion) => {
+  // La lista de usuarios solo la exporta quien puede verla.
+  if (['usuarios', 'todo'].includes(seccion) && !sesionTienePermiso('usuarios.ver')) {
+    return SIN_PERMISOS
+  }
   try {
     // Fecha local (toISOString usa UTC y de noche daría el día siguiente).
     const fecha = new Date().toLocaleDateString('sv-SE')

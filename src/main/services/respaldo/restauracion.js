@@ -69,10 +69,15 @@ const leerEsquema = async (conexion) => {
   return esquema
 }
 
+// Tablas agregadas en versiones nuevas: si una copia anterior no las tiene, la app las crea
+// al iniciar (por ejemplo, Roles crea los roles por defecto).
+const TABLAS_QUE_LA_APP_CREA = ['Roles']
+
 const validarCompatibilidad = (esquemaActual, esquemaCopia) => {
   const problemas = []
   for (const [tabla, columnas] of Object.entries(esquemaActual)) {
     if (!esquemaCopia[tabla]) {
+      if (TABLAS_QUE_LA_APP_CREA.includes(tabla)) continue
       problemas.push(`falta la tabla ${tabla}`)
       continue
     }

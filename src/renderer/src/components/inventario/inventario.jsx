@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Search, Package } from 'lucide-react'
 import AgregarProducto from './agregarProducto/agregarProducto'
 import EditarProducto from './editarPoducto/editarProducto'
+import { usePermisos } from '../../sesion'
 
 const Inventario = () => {
+  const { puede } = usePermisos()
   const [productos, setProductos] = useState([])
   const [proveedores, setProveedores] = useState()
   const [editingProducto, setEditingProducto] = useState(null)
@@ -138,17 +140,19 @@ const Inventario = () => {
           <Package />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
         </div>
-        <button
-          onClick={() => {
-            resetForm()
-            setShowFormAgregar(true)
-          }}
-          disabled={proveedores?.length === 0}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
-        >
-          <Plus className="w-4 h-4" />
-          Agregar Producto
-        </button>
+        {puede('inventario.crear') && (
+          <button
+            onClick={() => {
+              resetForm()
+              setShowFormAgregar(true)
+            }}
+            disabled={proveedores?.length === 0}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
+          >
+            <Plus className="w-4 h-4" />
+            Agregar Producto
+          </button>
+        )}
       </div>
 
       {/* Buscador */}
@@ -240,18 +244,22 @@ const Inventario = () => {
                     {producto.Proveedor?.nombre || 'Sin asignar'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(producto)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-3"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(producto.id)}
-                      className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {puede('inventario.editar') && (
+                      <button
+                        onClick={() => handleEdit(producto)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-3"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    )}
+                    {puede('inventario.eliminar') && (
+                      <button
+                        onClick={() => handleDelete(producto.id)}
+                        className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

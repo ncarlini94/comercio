@@ -10,6 +10,7 @@ import Ventas from './components/ventas/ventas'
 import Pedidos from './components/pedidos/pedidos'
 import Usuarios from './components/usuarios/usuarios'
 import Panel from './components/panel/panel'
+import Roles from './components/roles/roles'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/proveedores" element={<Proveedores />} />
           <Route path="/pedidos" element={<Pedidos />} />
           <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/roles" element={<Roles />} />
           <Route path="/configuracion" element={<Panel />} />
         </Route>
       </Routes>

@@ -10,7 +10,14 @@ if (process.contextIsolated) {
       login: (data) => ipcRenderer.invoke('login', data),
       registro: (data) => ipcRenderer.invoke('registro', data),
       obtenerUsuarios: () => ipcRenderer.invoke('obtenerUsuarios'),
+      editarUsuario: (id, cambios) => ipcRenderer.invoke('editarUsuario', id, cambios),
       existenUsuarios: () => ipcRenderer.invoke('existenUsuarios'),
+
+      obtenerRoles: () => ipcRenderer.invoke('obtenerRoles'),
+      obtenerCatalogoPermisos: () => ipcRenderer.invoke('obtenerCatalogoPermisos'),
+      crearRol: (datos) => ipcRenderer.invoke('crearRol', datos),
+      actualizarRol: (id, datos) => ipcRenderer.invoke('actualizarRol', id, datos),
+      eliminarRol: (id) => ipcRenderer.invoke('eliminarRol', id),
       obtenerSesion: () => ipcRenderer.invoke('obtenerSesion'),
       cerrarSesion: () => ipcRenderer.invoke('cerrarSesion'),
 
@@ -32,7 +39,6 @@ if (process.contextIsolated) {
       actualizarProveedor: (id, proveedor) =>
         ipcRenderer.invoke('actualizarProveedor', id, proveedor),
       eliminarProveedor: (id) => ipcRenderer.invoke('eliminarProveedor', id),
-      obtenerProveedorPorId: (id) => ipcRenderer.invoke('obtenerProveedorPorId', id),
 
       obtenerTodasLasVentas: () => ipcRenderer.invoke('obtenerTodasLasVentas'),
       obtenerProductosVenta: (id) => ipcRenderer.invoke('obtenerProductosVenta', id),
@@ -42,7 +48,6 @@ if (process.contextIsolated) {
       obtenerTodosLosPedidos: () => ipcRenderer.invoke('obtenerTodosLosPedidos'),
       obtenerTodosLosProductosPedidos: (id) =>
         ipcRenderer.invoke('obtenerTodosLosProductosPedidos', id),
-      obtenerPedidoPorId: (id) => ipcRenderer.invoke('obtenerPedidoPorId', id),
       actualizarPedido: (id, estado) => ipcRenderer.invoke('actualizarPedido', id, estado),
       agregarPedido: (pedido) => ipcRenderer.invoke('agregarPedido', pedido),
       eliminarPedido: (id) => ipcRenderer.invoke('eliminarPedido', id),

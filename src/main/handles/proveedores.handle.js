@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { manejar } from '../services/canales.js'
 import {
   actualizarProveedor,
   agregarProveedor,
@@ -6,7 +6,7 @@ import {
   obtenerTodosLosProveedores
 } from '../controllers/proveedores.controller'
 
-ipcMain.handle('obtenerTodosLosProveedores', async () => {
+manejar('obtenerTodosLosProveedores', async () => {
   try {
     const proveedores = await obtenerTodosLosProveedores()
     return proveedores
@@ -16,7 +16,7 @@ ipcMain.handle('obtenerTodosLosProveedores', async () => {
   }
 })
 
-ipcMain.handle('agregarProveedor', async (event, proveedor) => {
+manejar('agregarProveedor', async (event, proveedor) => {
   try {
     const nuevo = await agregarProveedor(proveedor)
     return nuevo
@@ -26,7 +26,7 @@ ipcMain.handle('agregarProveedor', async (event, proveedor) => {
   }
 })
 
-ipcMain.handle('actualizarProveedor', async (event, id, proveedor) => {
+manejar('actualizarProveedor', async (event, id, proveedor) => {
   try {
     const resultado = await actualizarProveedor(id, proveedor)
     return resultado
@@ -36,7 +36,7 @@ ipcMain.handle('actualizarProveedor', async (event, id, proveedor) => {
   }
 })
 
-ipcMain.handle('eliminarProveedor', async (event, id) => {
+manejar('eliminarProveedor', async (event, id) => {
   try {
     const resultado = await eliminarProveedor(id)
     return resultado
