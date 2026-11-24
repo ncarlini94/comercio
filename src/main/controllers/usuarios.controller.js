@@ -184,13 +184,17 @@ export const editarUsuario = async (id, cambios = {}) => {
       if (error) return { success: false, message: error }
       nuevo.usuario = cambios.usuario.trim()
     }
-    if (cambios.mail !== undefined && cambios.mail !== usuario.mail) {
+    if (cambios.mail !== undefined) {
       const error = validarTexto(cambios.mail, 'el mail')
       if (error) return { success: false, message: error }
-      if (await Usuarios.findOne({ where: { mail: cambios.mail.trim() } })) {
-        return { success: false, message: 'Ya existe un usuario con ese mail' }
+      // Se compara sin espacios: el propio mail con espacios no es un cambio.
+      const mail = cambios.mail.trim()
+      if (mail !== usuario.mail) {
+        if (await Usuarios.findOne({ where: { mail } })) {
+          return { success: false, message: 'Ya existe un usuario con ese mail' }
+        }
+        nuevo.mail = mail
       }
-      nuevo.mail = cambios.mail.trim()
     }
     if (cambios.rol !== undefined && cambios.rol !== usuario.rol) {
       if (esUnoMismo) return { success: false, message: 'No puede cambiar su propio rol' }
