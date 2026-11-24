@@ -8,6 +8,8 @@ import PrivatedLayout from './layouts/PrivatedLayout'
 import Registro from './components/registro/registro'
 import Ventas from './components/ventas/ventas'
 import Pedidos from './components/pedidos/pedidos'
+import Usuarios from './components/usuarios/usuarios'
+import Panel from './components/panel/panel'
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
           <Route path="/inventario" element={<Inventario />} />
           <Route path="/proveedores" element={<Proveedores />} />
           <Route path="/pedidos" element={<Pedidos />} />
+          <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/configuracion" element={<Panel />} />
         </Route>
       </Routes>
     </HashRouter>

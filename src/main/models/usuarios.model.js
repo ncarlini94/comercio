@@ -13,13 +13,22 @@ const Usuarios = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false
     },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
     mail: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
     },
-    password: {
+    rol: {
+      type: DataTypes.ENUM('Propietario', 'Administrador', 'Vendedor'),
+      allowNull: false
+    },
+    estado: {
       type: DataTypes.STRING,
+      defaultValue: 'Activo',
       allowNull: false
     }
   },

@@ -5,18 +5,36 @@ import { useState, useEffect } from 'react'
 export default function PrivatedLayout() {
   const sectionByPath = {
     '/': 'dashboard',
-    '/inventario': 'inventory',
-    '/Proveedores': 'suppliers',
-    '/ventas': 'sales',
-    '/pedidos': 'orders'
+    '/inventario': 'inventario',
+    '/proveedores': 'proveedores',
+    '/ventas': 'ventas',
+    '/pedidos': 'pedidos',
+    '/usuarios': 'usuarios',
+    '/configuracion': 'configuracion'
   }
 
-  const isAuthenticated = !!localStorage.getItem('token')
   const location = useLocation()
   const navigate = useNavigate()
+  // null = verificando, true/false = resultado de la sesión en el proceso principal
+  const [isAuthenticated, setIsAuthenticated] = useState(null)
   const [activeSection, setActiveSection] = useState(
     sectionByPath[location.pathname] || 'dashboard'
   )
+
+  useEffect(() => {
+    window.API.obtenerSesion().then((sesion) => {
+      if (sesion) {
+        localStorage.setItem('usuario', sesion.usuario)
+        localStorage.setItem('Rol', sesion.rol)
+        setIsAuthenticated(true)
+      } else {
+        localStorage.removeItem('token')
+        localStorage.removeItem('usuario')
+        localStorage.removeItem('Rol')
+        setIsAuthenticated(false)
+      }
+    })
+  }, [])
 
   useEffect(() => {
     setActiveSection(sectionByPath[location.pathname] || 'dashboard')
@@ -26,6 +44,10 @@ export default function PrivatedLayout() {
     setActiveSection(sectionId)
     const path = Object.entries(sectionByPath).find(([, id]) => id === sectionId)?.[0]
     if (path) navigate(path)
+  }
+
+  if (isAuthenticated === null) {
+    return null
   }
 
   if (!isAuthenticated) {
