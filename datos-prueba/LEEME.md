@@ -37,6 +37,14 @@ Todos usan la contraseña `demo1234`.
 | `vendedor@demo.com` | Vendedor | Activo |
 | `inactivo@demo.com` | Vendedor | Inactivo |
 
+El usuario inactivo no puede iniciar sesión: sirve para probar ese bloqueo.
+
+## Roles
+
+La copia trae los roles por defecto: Propietario (todos los permisos, no se puede modificar),
+Administrador (todo menos restaurar copias) y Vendedor (ver el panel, ver y crear ventas, ver
+productos, proveedores y pedidos). Se pueden editar o crear otros desde **Administrar → Roles**.
+
 ## Resultado esperado al importar sobre la base demo
 
 - **Inventario:** 5 importados, 1 que ya existía (Yerba mate) y 2 con errores (precio negativo y

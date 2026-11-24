@@ -139,7 +139,10 @@ app.whenReady().then(async () => {
     const { default: Pedidos } = await import('../../src/main/models/pedidos.model.js')
     const { default: ProductosPedidos } =
       await import('../../src/main/models/productosPedidos.model.js')
+    const { inicializarRoles } = await import('../../src/main/services/permisos.js')
     await sequelize.sync({ force: true })
+    // Roles por defecto (Propietario, Administrador y Vendedor), igual que al abrir la app.
+    await inicializarRoles()
 
     // Fechas a mano: Sequelize pone la fecha actual al crear, así que se actualizan después.
     const fijarFecha = (tabla, id, fecha) =>
