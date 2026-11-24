@@ -35,12 +35,12 @@ export const agregarProducto = async (producto) => {
 
 export const actualizarProducto = async (id, producto) => {
   try {
-    const Producto = await Inventario.findByPk(id)
-    if (!producto) {
+    const productoExistente = await Inventario.findByPk(id)
+    if (!productoExistente) {
       return { error: 'Producto no encontrado' }
     }
-    await Producto.update(producto)
-    return Producto.toJSON()
+    await productoExistente.update(producto)
+    return productoExistente.toJSON()
   } catch (error) {
     console.error('Error al actualizar el producto:', error)
     return { error: 'Error al actualizar el producto' }

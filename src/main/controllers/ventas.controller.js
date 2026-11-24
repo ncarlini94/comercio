@@ -93,31 +93,31 @@ export const eliminarVenta = async (id) => {
       const productosVendidos = await ProductosVendidos.findAll({
         where: { id_ventas: id },
         transaction: t
-      });
+      })
 
       for (const { producto: nombre, cantidad } of productosVendidos) {
         const productoInv = await Inventario.findOne({
-          where: { nombre },      // coincide con item.producto
+          where: { nombre }, // coincide con item.producto
           transaction: t
-        });
+        })
 
         if (productoInv) {
           await productoInv.increment('stock', {
             by: cantidad,
             transaction: t
-          });
+          })
         } else {
-          console.warn(`No hay inventario con nombre “${nombre}”`);
+          console.warn(`No hay inventario con nombre “${nombre}”`)
         }
       }
 
-      await ProductosVendidos.destroy({ where: { id_ventas: id }, transaction: t });
-      await Ventas.destroy({ where: { id }, transaction: t });
-    });
+      await ProductosVendidos.destroy({ where: { id_ventas: id }, transaction: t })
+      await Ventas.destroy({ where: { id }, transaction: t })
+    })
 
-    return { message: 'Venta eliminada y stock restaurado' };
+    return { message: 'Venta eliminada y stock restaurado' }
   } catch (error) {
-    console.error('Error al eliminar venta:', error);
-    return { error: error.message };
+    console.error('Error al eliminar venta:', error)
+    return { error: error.message }
   }
 }
