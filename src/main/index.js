@@ -19,6 +19,10 @@ import './handles/proveedores.handle.js'
 import './handles/ventas.handle.js'
 import './handles/pedidos.handle.js'
 import './handles/dashboard.handle.js'
+import './handles/importar.handle.js'
+import './handles/respaldo.handle.js'
+import { iniciarProgramadorRespaldo } from './services/respaldo/respaldo.js'
+import { migrarContraseniasAnteriores } from './controllers/usuarios.controller.js'
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -60,6 +64,11 @@ app.whenReady().then(async () => {
     .catch((error) => {
       console.error('Error al sincronizar la base de datos:', error)
     })
+  // Contraseñas del formato anterior (cifradas por equipo) → bcrypt. Si falla, el login
+  // igual las acepta y las convierte al iniciar sesión.
+  await migrarContraseniasAnteriores().catch((error) =>
+    console.error('Error al migrar contraseñas:', error)
+  )
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
@@ -67,6 +76,9 @@ app.whenReady().then(async () => {
   ipcMain.on('ping', () => console.log('pong'))
 
   createWindow()
+
+  // Después de sincronizar la base: hace las copias programadas y recupera las pendientes.
+  iniciarProgramadorRespaldo()
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

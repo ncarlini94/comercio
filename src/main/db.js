@@ -6,7 +6,7 @@ import { SqliteDialect } from '@sequelize/sqlite3'
 
 const userDataPath = app.getPath('userData')
 
-const dbPath = path.join(userDataPath, 'database.db')
+export const dbPath = path.join(userDataPath, 'database.db')
 console.log('Ruta de la base de datos:', dbPath)
 
 if (!fs.existsSync(userDataPath)) {

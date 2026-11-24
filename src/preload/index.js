@@ -11,12 +11,16 @@ if (process.contextIsolated) {
 
       login: (data) => ipcRenderer.invoke('login', data),
       registro: (data) => ipcRenderer.invoke('registro', data),
+      obtenerUsuarios: () => ipcRenderer.invoke('obtenerUsuarios'),
+      existenUsuarios: () => ipcRenderer.invoke('existenUsuarios'),
+      obtenerSesion: () => ipcRenderer.invoke('obtenerSesion'),
+      cerrarSesion: () => ipcRenderer.invoke('cerrarSesion'),
 
       obtenerTotalProductos: () => ipcRenderer.invoke('obtenerTotalProductos'),
       obtenerTotalProveedores: () => ipcRenderer.invoke('obtenerTotalProveedores'),
       obtenerTotalVentasHoy: (fecha) => ipcRenderer.invoke('obtenerTotalVentasHoy', fecha),
       obtenerTotalStockBajo: () => ipcRenderer.invoke('obtenerTotalStockBajo'),
-      obtenerUltimasVentas: () => ipcRenderer.invoke('obtenerTodasLasVentas'),
+      obtenerUltimasVentas: () => ipcRenderer.invoke('obtenerUltimasVentas'),
       obtenerProductosStockBajo: () => ipcRenderer.invoke('obtenerProductosStockBajo'),
       obtenerProductosMasVendidos: () => ipcRenderer.invoke('obtenerProductosMasVendidos'),
 
@@ -43,7 +47,18 @@ if (process.contextIsolated) {
       obtenerPedidoPorId: (id) => ipcRenderer.invoke('obtenerPedidoPorId', id),
       actualizarPedido: (id, estado) => ipcRenderer.invoke('actualizarPedido', id, estado),
       agregarPedido: (pedido) => ipcRenderer.invoke('agregarPedido', pedido),
-      eliminarPedido: (id) => ipcRenderer.invoke('eliminarPedido', id)
+      eliminarPedido: (id) => ipcRenderer.invoke('eliminarPedido', id),
+
+      importar: (seccion) => ipcRenderer.invoke('importar', seccion),
+      exportar: (seccion) => ipcRenderer.invoke('exportar', seccion),
+
+      obtenerRespaldo: () => ipcRenderer.invoke('obtenerRespaldo'),
+      guardarRespaldo: (datos) => ipcRenderer.invoke('guardarRespaldo', datos),
+      elegirCarpetaRespaldo: () => ipcRenderer.invoke('elegirCarpetaRespaldo'),
+      crearRespaldo: () => ipcRenderer.invoke('crearRespaldo'),
+      elegirRespaldoParaRestaurar: () => ipcRenderer.invoke('elegirRespaldoParaRestaurar'),
+      restaurarRespaldo: () => ipcRenderer.invoke('restaurarRespaldo'),
+      cancelarRestauracion: () => ipcRenderer.invoke('cancelarRestauracion')
     })
   } catch (error) {
     console.error(error)
