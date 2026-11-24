@@ -11,6 +11,8 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "test": "node scripts/test.mjs",
+    "test:e2e": "electron-vite build && playwright test",
     "postinstall": "electron-builder install-app-deps",
     "datos-prueba": "esbuild scripts/datos-prueba/generar.js --bundle --platform=node --format=cjs --outfile=out/datos-prueba.cjs --external:electron --external:sqlite3 --external:@sequelize/* --log-level=warning && electron out/datos-prueba.cjs",
     "build:unpack": "npm run build && electron-builder --dir",
@@ -34,6 +36,7 @@
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^2.1.0",
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
+    "@playwright/test": "^1.65.1",
     "@vitejs/plugin-react": "^5.1.4",
     "electron": "^40.6.1",
     "electron-builder": "^26.8.1",
@@ -45,6 +48,7 @@
     "prettier": "^3.8.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^5.1.1"
   }
 }

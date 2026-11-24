@@ -16,7 +16,8 @@ Aplicación de escritorio desarrollada con Electron y React para la gestión de 
 - Electron
 - React
 - Node.js
-- (Agrega aquí la base de datos que utilizas, por ejemplo: SQLite, MySQL, etc.)
+- SQLite (con Sequelize)
+- Vitest y Playwright (tests)
 
 ## Estructura del proyecto
 
@@ -41,6 +42,37 @@ npm install
 ```bash
 npm run dev
 ```
+
+## Tests
+
+```bash
+# Tests unitarios y de integración (Vitest), contra una base SQLite temporal
+npm test
+
+# Modo observador mientras se programa
+npm test -- --watch
+
+# Tests de punta a punta (Playwright): compila y abre la app real con datos temporales
+npm run test:e2e
+```
+
+- `tests/unit/`: lógica pura (horarios de copias, validaciones, permisos).
+- `tests/integracion/`: controladores y servicios del proceso principal contra SQLite.
+- `tests/e2e/`: flujos completos en la app compilada (login, roles, permisos por rol).
+
+`npm test` ejecuta Vitest con el Node que trae Electron, porque el módulo nativo `sqlite3`
+está compilado para Electron. El módulo `electron` se reemplaza por `tests/mocks/electron.js`.
+Los tests de punta a punta usan la variable `COMERCIO_USER_DATA` para abrir la app con una
+carpeta de datos temporal; nunca tocan la base real.
+
+## Datos de prueba
+
+```bash
+npm run datos-prueba
+```
+
+Genera en `datos-prueba/` una copia completa para restaurar desde la app y dos Excel para
+importar. Ver `datos-prueba/LEEME.md`.
 
 ## Build
 
