@@ -69,6 +69,7 @@ export const agregarVenta = async (venta) => {
         await ProductosVendidos.create(
           {
             id_ventas: ventaCreada.id,
+            id_producto: producto.id,
             producto: producto.nombre,
             cantidad: item.cantidad,
             precio_unitario: producto.precio
@@ -95,11 +96,12 @@ export const eliminarVenta = async (id) => {
         transaction: t
       })
 
-      for (const { producto: nombre, cantidad } of productosVendidos) {
-        const productoInv = await Inventario.findOne({
-          where: { nombre }, // coincide con item.producto
-          transaction: t
-        })
+      for (const { id_producto, producto: nombre, cantidad } of productosVendidos) {
+        // Por id (aunque el producto se haya renombrado). Las ventas anteriores a la columna
+        // id_producto no lo tienen: para esas se busca por nombre, como antes.
+        const productoInv = id_producto
+          ? await Inventario.findByPk(id_producto, { transaction: t })
+          : await Inventario.findOne({ where: { nombre }, transaction: t })
 
         if (productoInv) {
           await productoInv.increment('stock', {
@@ -107,7 +109,7 @@ export const eliminarVenta = async (id) => {
             transaction: t
           })
         } else {
-          console.warn(`No hay inventario con nombre “${nombre}”`)
+          console.warn(`No se devolvió stock: el producto "${nombre}" ya no está en el inventario`)
         }
       }
 

@@ -4,6 +4,7 @@ import { app } from 'electron'
 import { Sequelize } from '@sequelize/core'
 import { SqliteDialect } from '@sequelize/sqlite3'
 import sequelize, { dbPath } from '../../db.js'
+import { COLUMNAS_QUE_AGREGAN_LAS_MIGRACIONES } from '../migraciones.js'
 import {
   bloquearCopias,
   carpetaRespaldoConfigurada,
@@ -81,7 +82,11 @@ const validarCompatibilidad = (esquemaActual, esquemaCopia) => {
       problemas.push(`falta la tabla ${tabla}`)
       continue
     }
-    const faltantes = columnas.filter((c) => !esquemaCopia[tabla].includes(c))
+    // Las columnas que agregan las migraciones pueden faltar: se agregan al reiniciar.
+    const agregables = COLUMNAS_QUE_AGREGAN_LAS_MIGRACIONES[tabla] ?? []
+    const faltantes = columnas.filter(
+      (c) => !esquemaCopia[tabla].includes(c) && !agregables.includes(c)
+    )
     if (faltantes.length > 0) problemas.push(`${tabla} no tiene ${faltantes.join(', ')}`)
   }
   return problemas

@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -24,6 +24,7 @@ import './handles/respaldo.handle.js'
 import { iniciarProgramadorRespaldo } from './services/respaldo/respaldo.js'
 import { migrarContraseniasAnteriores } from './controllers/usuarios.controller.js'
 import { inicializarRoles } from './services/permisos.js'
+import { aplicarMigraciones } from './services/migraciones.js'
 import { manejar } from './services/canales.js'
 
 function createWindow() {
@@ -69,6 +70,21 @@ app.whenReady().then(async () => {
     .catch((error) => {
       console.error('Error al sincronizar la base de datos:', error)
     })
+  // Columnas nuevas sobre bases existentes (sync no las agrega). Solo agregan, nunca borran.
+  // Si una falla, su transacción deja la base como estaba, pero la app no puede funcionar con
+  // la estructura vieja: se avisa y se cierra en lugar de abrir con pantallas rotas.
+  try {
+    await aplicarMigraciones()
+  } catch (error) {
+    console.error('Error al aplicar migraciones:', error)
+    dialog.showErrorBox(
+      'No se pudo actualizar la base de datos',
+      'Los datos no se modificaron. Cierre otros programas que puedan estar usando la base y ' +
+        `vuelva a abrir la aplicación. Detalle: ${error.message}`
+    )
+    app.exit(1)
+    return
+  }
   // Crea los roles por defecto si faltan y carga sus permisos en memoria.
   await inicializarRoles().catch((error) => console.error('Error al inicializar roles:', error))
   // Contraseñas del formato anterior (cifradas por equipo) → bcrypt. Si falla, el login

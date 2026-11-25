@@ -13,6 +13,13 @@ const ProductosVendidos = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false
     },
+    // Id del producto vendido. Puede ser null en ventas anteriores a esta columna (se usa el
+    // nombre) y no tiene restricción hacia Inventario: borrar un producto no afecta las ventas.
+    id_producto: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    // Nombre del producto al momento de la venta (queda como registro histórico).
     producto: {
       type: DataTypes.STRING,
       allowNull: false

@@ -214,6 +214,7 @@ app.whenReady().then(async () => {
         for (const [producto, cantidad] of items) {
           const detalle = await ProductosVendidos.create({
             id_ventas: venta.id,
+            id_producto: producto.id,
             producto: producto.nombre,
             cantidad,
             precio_unitario: producto.precio

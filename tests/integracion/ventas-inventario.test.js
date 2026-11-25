@@ -125,6 +125,54 @@ describe('eliminarVenta', () => {
     expect(await stockDe(yerba)).toBe(10)
     expect(await stockDe(azucar)).toBe(2)
   })
+
+  it('guarda el id del producto en el detalle de la venta', async () => {
+    const { venta_id } = await agregarVenta({
+      metodo: 'Efectivo',
+      carrito: [{ id_producto: yerba.id, cantidad: 2 }]
+    })
+    const detalle = await ProductosVendidos.findOne({ where: { id_ventas: venta_id } })
+    expect(detalle.id_producto).toBe(yerba.id)
+    expect(detalle.producto).toBe('Yerba')
+  })
+
+  it('devuelve el stock aunque el producto se haya renombrado después de la venta', async () => {
+    const { venta_id } = await agregarVenta({
+      metodo: 'Efectivo',
+      carrito: [{ id_producto: yerba.id, cantidad: 3 }]
+    })
+    await Inventario.update({ nombre: 'Yerba premium' }, { where: { id: yerba.id } })
+
+    await eliminarVenta(venta_id)
+    expect(await stockDe(yerba)).toBe(10)
+  })
+
+  it('una venta anterior sin id de producto devuelve el stock buscando por nombre', async () => {
+    const venta = await Ventas.create({ total: 200, metodo: 'Efectivo' })
+    await ProductosVendidos.create({
+      id_ventas: venta.id,
+      id_producto: null,
+      producto: 'Yerba',
+      cantidad: 2,
+      precio_unitario: 100
+    })
+
+    await eliminarVenta(venta.id)
+    expect(await stockDe(yerba)).toBe(12)
+  })
+
+  it('borrar un producto no borra el detalle de las ventas que lo incluyen', async () => {
+    const { venta_id } = await agregarVenta({
+      metodo: 'Efectivo',
+      carrito: [{ id_producto: yerba.id, cantidad: 1 }]
+    })
+    await eliminarProducto(yerba.id)
+
+    expect(await Ventas.findByPk(venta_id)).not.toBeNull()
+    const detalle = await ProductosVendidos.findAll({ where: { id_ventas: venta_id } })
+    expect(detalle).toHaveLength(1)
+    expect(detalle[0].producto).toBe('Yerba')
+  })
 })
 
 describe('inventario', () => {
