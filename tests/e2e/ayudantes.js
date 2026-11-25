@@ -69,7 +69,7 @@ export const sembrarUsuarios = async (ventana, otros = []) => {
     { propietario: PROPIETARIO, otros }
   )
   await ventana.evaluate(() => (window.location.hash = '#/login'))
-  await expect(ventana.getByRole('heading', { name: 'Iniciar Sesión' })).toBeVisible()
+  await expect(ventana.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible()
 }
 
 // Crea un proveedor, un producto y una venta. Requiere una sesión con esos permisos.
@@ -104,9 +104,9 @@ export const sembrarVenta = async (ventana) =>
 
 // Inicia sesión a través del formulario de login.
 export const iniciarSesion = async (ventana, { mail, password }) => {
-  await ventana.locator('#Mail').fill(mail)
-  await ventana.getByLabel('Contraseña:').fill(password)
-  await ventana.getByRole('button', { name: 'Iniciar Sesión' }).click()
+  await ventana.getByLabel('Mail', { exact: true }).fill(mail)
+  await ventana.getByLabel('Contraseña', { exact: true }).fill(password)
+  await ventana.getByRole('button', { name: 'Iniciar sesión' }).click()
 }
 
 // Inicia sesión por el formulario y espera a que aparezca la barra lateral.
@@ -121,3 +121,10 @@ export const irA = async (ventana, seccion) => {
 }
 
 export const filaDe = (ventana, texto) => ventana.getByRole('row').filter({ hasText: texto })
+
+// La tarjeta del usuario en el menú lateral muestra su nombre y su rol.
+export const esperarUsuarioActual = async (ventana, usuario, rol) => {
+  const tarjeta = ventana.getByRole('region', { name: 'Usuario actual' })
+  await expect(tarjeta.getByText(usuario, { exact: true })).toBeVisible()
+  await expect(tarjeta.getByText(rol, { exact: true })).toBeVisible()
+}

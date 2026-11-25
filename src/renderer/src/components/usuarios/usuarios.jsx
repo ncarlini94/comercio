@@ -1,15 +1,53 @@
-import { Pencil, Plus, Search, User, UserCheck, UserLock } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Pencil, Plus, ShieldCheck, UserCheck, UserX, Users } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import AgregarUsuario from './agregarUsuario/agregarUsuario'
 import EditarUsuario from './editarUsuario/editarUsuario'
 import { usePermisos } from '../../sesion'
+import {
+  Pagina,
+  BarraHerramientas,
+  Boton,
+  BotonIcono,
+  Buscador,
+  EncabezadoPagina,
+  EstadoVacio,
+  Insignia,
+  Selector,
+  Tabla,
+  TablaCelda,
+  TablaCuerpo,
+  TablaEncabezado,
+  TablaFila,
+  TarjetaMetrica,
+  useAvisos
+} from '../ui'
+import { formatearNumero } from '../../utils/formato'
 
 const FORM_INICIAL = { usuario: '', mail: '', password: '', rol: '' }
 
+// Hasta dos iniciales del nombre de usuario: "María López" → "ML".
+const iniciales = (nombre = '') =>
+  nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte.charAt(0).toUpperCase())
+    .join('')
+
+// El filtro combina estado y rol en un solo selector: "estado:Activo" o "rol:Vendedor".
+const cumpleFiltro = (usuario, filtro) => {
+  if (!filtro) return true
+  const [tipo, valor] = filtro.split(/:(.*)/s)
+  return tipo === 'estado' ? usuario.estado === valor : usuario.rol === valor
+}
+
 const Usuarios = () => {
   const { sesion, puede, recargarSesion } = usePermisos()
+  const avisos = useAvisos()
   const [usuarios, setUsuarios] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
+  const [cargado, setCargado] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [filtro, setFiltro] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [formData, setFormData] = useState(FORM_INICIAL)
   const [mensaje, setMensaje] = useState('')
@@ -25,10 +63,27 @@ const Usuarios = () => {
     })
   }, [])
 
+  const obtenerUsuarios = async () => {
+    try {
+      const resultado = await window.API.obtenerUsuarios()
+      setUsuarios(Array.isArray(resultado) ? resultado : [])
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error)
+      setUsuarios([])
+    } finally {
+      setCargado(true)
+    }
+  }
+
+  useEffect(() => {
+    obtenerUsuarios()
+  }, [])
+
   const guardarEdicion = async (id, cambios) => {
     const respuesta = await window.API.editarUsuario(id, cambios)
     if (respuesta.success) {
       setEditando(null)
+      avisos.exito('Usuario actualizado')
       obtenerUsuarios()
       if (id === sesion?.id_usuario) recargarSesion()
     }
@@ -47,6 +102,7 @@ const Usuarios = () => {
       const response = await window.API.registro({ ...formData, estado: 'Activo' })
       if (response.success === true) {
         cerrarFormulario()
+        avisos.exito('Usuario creado', formData.usuario)
         obtenerUsuarios()
       } else {
         setMensaje(response.message || 'Error al crear el usuario')
@@ -57,44 +113,149 @@ const Usuarios = () => {
     }
   }
 
-  useEffect(() => {
-    obtenerUsuarios()
-  }, [])
-
-  const obtenerUsuarios = async () => {
-    try {
-      const resultado = await window.API.obtenerUsuarios()
-      console.log('Usuarios obtenidos:', resultado)
-      if (Array.isArray(resultado)) {
-        setUsuarios(resultado)
-      } else {
-        setUsuarios([])
-      }
-    } catch (error) {
-      console.error('Error al cargar usuarios:', error)
-      setUsuarios([])
+  const metricas = useMemo(() => {
+    const activos = usuarios.filter((u) => u.estado === 'Activo').length
+    return {
+      activos,
+      inactivos: usuarios.length - activos,
+      roles: [...new Set(usuarios.map((u) => u.rol))].sort((a, b) => a.localeCompare(b))
     }
-  }
+  }, [usuarios])
+
+  const termino = busqueda.toLowerCase()
+  const visibles = usuarios.filter(
+    (usuario) =>
+      cumpleFiltro(usuario, filtro) &&
+      (usuario.usuario.toLowerCase().includes(termino) ||
+        usuario.mail.toLowerCase().includes(termino) ||
+        usuario.rol.toLowerCase().includes(termino) ||
+        usuario.estado.toLowerCase().includes(termino))
+  )
+
+  const cantidad = usuarios.length
+  const subtitulo = `${formatearNumero(cantidad)} usuario${cantidad === 1 ? '' : 's'} registrado${cantidad === 1 ? '' : 's'}`
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2 mb-4 ps-4 pt-2">
-            <User />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Usuarios</h1>
-          </div>
-          {puede('usuarios.crear') && (
-            <button
-              onClick={() => setMostrarFormulario(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 me-4"
-            >
-              <Plus className="w-4 h-4" />
+    <Pagina>
+      <EncabezadoPagina
+        icono={Users}
+        titulo="Usuarios"
+        subtitulo={subtitulo}
+        acciones={
+          puede('usuarios.crear') && (
+            <Boton variante="primario" icono={Plus} onClick={() => setMostrarFormulario(true)}>
               Nuevo usuario
-            </button>
-          )}
-        </div>
+            </Boton>
+          )
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <TarjetaMetrica
+          etiqueta="Activos"
+          valor={formatearNumero(metricas.activos)}
+          icono={UserCheck}
+        />
+        <TarjetaMetrica
+          etiqueta="Inactivos"
+          valor={formatearNumero(metricas.inactivos)}
+          icono={UserX}
+        />
+        <TarjetaMetrica
+          etiqueta="Roles en uso"
+          valor={formatearNumero(metricas.roles.length)}
+          icono={ShieldCheck}
+        />
       </div>
+
+      <BarraHerramientas>
+        <Buscador
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar usuario"
+          etiqueta="Buscar usuario"
+        />
+        <Selector
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          aria-label="Filtrar por rol o estado"
+          className="w-full sm:w-56"
+        >
+          <option value="">Todos los usuarios</option>
+          <optgroup label="Estado">
+            <option value="estado:Activo">Activos</option>
+            <option value="estado:Inactivo">Inactivos</option>
+          </optgroup>
+          {metricas.roles.length > 0 && (
+            <optgroup label="Rol">
+              {metricas.roles.map((rol) => (
+                <option key={rol} value={`rol:${rol}`}>
+                  {rol}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </Selector>
+      </BarraHerramientas>
+
+      {!cargado ? null : visibles.length === 0 ? (
+        <EstadoVacio
+          icono={Users}
+          titulo={cantidad === 0 ? 'No hay usuarios' : 'Sin resultados'}
+          descripcion={
+            cantidad === 0
+              ? 'Los usuarios nuevos aparecen acá.'
+              : 'Ningún usuario coincide con la búsqueda o el filtro.'
+          }
+        />
+      ) : (
+        <Tabla desplazable>
+          <TablaEncabezado>
+            <TablaCelda encabezado>Usuario</TablaCelda>
+            <TablaCelda encabezado>Mail</TablaCelda>
+            <TablaCelda encabezado>Rol</TablaCelda>
+            <TablaCelda encabezado>Estado</TablaCelda>
+            <TablaCelda encabezado alinear="derecha">
+              Acciones
+            </TablaCelda>
+          </TablaEncabezado>
+          <TablaCuerpo>
+            {visibles.map((usuario) => (
+              <TablaFila key={usuario.id_usuario}>
+                <TablaCelda>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primario-suave text-xs font-semibold text-primario-texto"
+                      aria-hidden="true"
+                    >
+                      {iniciales(usuario.usuario)}
+                    </span>
+                    <span className="font-medium whitespace-nowrap">{usuario.usuario}</span>
+                  </div>
+                </TablaCelda>
+                <TablaCelda className="text-texto-secundario">{usuario.mail}</TablaCelda>
+                <TablaCelda>
+                  <Insignia variante="primario">{usuario.rol}</Insignia>
+                </TablaCelda>
+                <TablaCelda>
+                  <Insignia variante={usuario.estado === 'Activo' ? 'exito' : 'peligro'}>
+                    {usuario.estado}
+                  </Insignia>
+                </TablaCelda>
+                <TablaCelda alinear="derecha">
+                  {usuario.editable && (
+                    <BotonIcono
+                      icono={Pencil}
+                      etiqueta="Editar usuario"
+                      onClick={() => setEditando(usuario)}
+                    />
+                  )}
+                </TablaCelda>
+              </TablaFila>
+            ))}
+          </TablaCuerpo>
+        </Tabla>
+      )}
 
       {editando && (
         <EditarUsuario
@@ -116,86 +277,7 @@ const Usuarios = () => {
           onCancel={cerrarFormulario}
         />
       )}
-
-      {/* Buscador */}
-      <div className="relative mb-6">
-        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-        <input
-          type="text"
-          placeholder="Buscar usuario"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border overflow-hidden dark:border-gray-700">
-        <div className="overflow-y-auto max-h-150">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-11 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Usuario
-                </th>
-                <th className="px-8 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Mail
-                </th>
-                <th className="px-8 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Rol
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {usuarios
-                .filter(
-                  (usuario) =>
-                    usuario.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    usuario.mail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    usuario.rol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    usuario.estado.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((usuario) => (
-                  <tr key={usuario.id_usuario}>
-                    <td className="px-14 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {usuario.usuario}
-                    </td>
-                    <td className="px-0 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {usuario.mail}
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {usuario.rol}
-                    </td>
-                    <td className="px-8 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {usuario.estado === 'Activo' ? (
-                        <UserCheck className="font-bold inline-block w-5 h-5 text-green-500 ml-2" />
-                      ) : (
-                        <UserLock className="font-bold inline-block w-5 h-5 text-red-500 ml-2" />
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {usuario.editable && (
-                        <button
-                          onClick={() => setEditando(usuario)}
-                          title="Editar usuario"
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
+    </Pagina>
   )
 }
 

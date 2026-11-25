@@ -1,72 +1,63 @@
 import PropTypes from 'prop-types'
+import { Boton, Insignia, Modal } from '../../ui'
+import { formatearFecha, formatearMoneda, formatearNumero } from '../../../utils/formato'
+import { etiquetaMetodo, varianteMetodo } from '../metodosPago'
+
+const Dato = ({ etiqueta, children }) => (
+  <div>
+    <dt className="text-xs font-medium text-texto-secundario">{etiqueta}</dt>
+    <dd className="mt-1 text-sm text-texto">{children}</dd>
+  </div>
+)
+
+Dato.propTypes = { etiqueta: PropTypes.node.isRequired, children: PropTypes.node }
+
 const DetallesVentas = ({ ventaSeleccionada, setVentaSeleccionada }) => {
+  const cerrar = () => setVentaSeleccionada(null)
   return (
-    <>
-      <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl mx-4">
-          <div className="px-6 py-4 border-b dark:border-gray-700">
-            <h3 className="text-lg font-semibold">
-              Detalles de Venta #{ventaSeleccionada.id} - {ventaSeleccionada.vendedor}
-            </h3>
-          </div>
+    <Modal
+      titulo={`Detalle de la venta #${ventaSeleccionada.id}`}
+      descripcion={`Vendedor: ${ventaSeleccionada.vendedor}`}
+      tamano="lg"
+      alCerrar={cerrar}
+      pie={<Boton onClick={cerrar}>Cerrar</Boton>}
+    >
+      <dl className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Dato etiqueta="Fecha">{formatearFecha(ventaSeleccionada.created_at)}</Dato>
+        <Dato etiqueta="Método de pago">
+          <Insignia variante={varianteMetodo(ventaSeleccionada.metodo)}>
+            {etiquetaMetodo(ventaSeleccionada.metodo)}
+          </Insignia>
+        </Dato>
+        <Dato etiqueta="Total">
+          <span className="text-xl font-semibold tabular-nums">
+            {formatearMoneda(ventaSeleccionada.total)}
+          </span>
+        </Dato>
+      </dl>
 
-          <div className="p-6">
-            <div className="mb-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Fecha:</span>
-                  <p>{new Date(ventaSeleccionada.created_at).toLocaleString()}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Total:</span>
-                  <p className="text-xl font-bold text-green-600">
-                    ${ventaSeleccionada.total.toFixed(2)}
-                  </p>
-                </div>
-              </div>
+      <h3 className="mb-3 text-sm font-semibold text-texto">Productos vendidos</h3>
+      <ul className="divide-y divide-borde rounded-lg border border-borde">
+        {ventaSeleccionada.Productos_vendidos?.map((item) => (
+          <li key={item.id} className="flex items-center justify-between gap-3 p-3">
+            <div className="min-w-0">
+              <p className="truncate font-medium text-texto">{item.producto}</p>
+              <p className="text-sm text-texto-secundario">
+                Cantidad: {formatearNumero(item.cantidad)}
+              </p>
             </div>
-
-            <div>
-              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">
-                Productos Vendidos
-              </h4>
-              <div className="space-y-2">
-                {ventaSeleccionada.Productos_vendidos?.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded"
-                  >
-                    <div>
-                      <p className="font-medium">{item.producto}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Cantidad: {item.cantidad}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">
-                        ${(item.precio_unitario * item.cantidad).toFixed(2)}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        ${item.precio_unitario.toFixed(2)} c/u
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="text-right tabular-nums">
+              <p className="font-semibold text-texto">
+                {formatearMoneda(item.precio_unitario * item.cantidad)}
+              </p>
+              <p className="text-sm text-texto-secundario">
+                {formatearMoneda(item.precio_unitario)} c/u
+              </p>
             </div>
-
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={() => setVentaSeleccionada(null)}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-900 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+          </li>
+        ))}
+      </ul>
+    </Modal>
   )
 }
 

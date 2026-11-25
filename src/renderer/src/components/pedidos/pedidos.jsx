@@ -1,12 +1,45 @@
 import { useState, useEffect } from 'react'
-import { Package, Plus } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Clock, Eye, Plus, Truck } from 'lucide-react'
 import AgregarPedido from './agregarPedido/agregarPedido'
 import EditarPedido from './editarPedido/editarPedido'
 import { usePermisos } from '../../sesion'
+import {
+  Pagina,
+  Cargando,
+  BarraHerramientas,
+  Boton,
+  BotonIcono,
+  Buscador,
+  EncabezadoPagina,
+  EstadoVacio,
+  Selector,
+  Tabla,
+  TablaCelda,
+  TablaCuerpo,
+  TablaEncabezado,
+  TablaFila,
+  TarjetaMetrica,
+  useAvisos
+} from '../ui'
+import { formatearFecha, formatearMoneda, formatearNumero } from '../../utils/formato'
+import InsigniaEstado, { ESTADOS_PEDIDO } from './insigniaEstado'
+
+// Los canales devuelven { error } o { success: false, message } cuando algo falla.
+const respuestaConError = (r) => Boolean(r?.error) || r?.success === false
+const detalleError = (r) => r?.error || r?.message
+
+const esDelMesActual = (fecha) => {
+  if (!fecha) return false
+  const f = new Date(fecha)
+  const hoy = new Date()
+  return f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth()
+}
 
 const Pedidos = () => {
   const { puede } = usePermisos()
+  const avisos = useAvisos()
   const [pedidos, setPedidos] = useState([])
+  const [cargado, setCargado] = useState(false)
   const [proveedores, setProveedores] = useState([])
   const [productos, setProductos] = useState([])
   const [mostrarNuevo, setMostrarNuevo] = useState(false)
@@ -16,9 +49,11 @@ const Pedidos = () => {
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null)
   const [productosSeleccionado, setProductosSeleccionado] = useState([])
   const [estado, setEstado] = useState(null)
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('')
 
   useEffect(() => {
-    cargarPedidos()
+    cargarPedidos().finally(() => setCargado(true))
     cargarProveedores()
     cargarProductos()
   }, [])
@@ -82,14 +117,23 @@ const Pedidos = () => {
       if (pedidoSeleccionado) {
         if (pedidoSeleccionado.estado === 'Aprobado') {
           console.error('No se puede cambiar el estado de aprobado')
+          avisos.error('No se puede cambiar el estado de un pedido aprobado')
         } else {
-          await window.API.actualizarPedido(pedidoSeleccionado.id, estado)
+          const resultado = await window.API.actualizarPedido(pedidoSeleccionado.id, estado)
+          if (respuestaConError(resultado)) {
+            avisos.error('No se pudo actualizar el pedido', detalleError(resultado))
+          } else {
+            avisos.exito(
+              'Pedido actualizado',
+              `El pedido #${pedidoSeleccionado.id} quedó ${estado}.`
+            )
+          }
           cargarPedidos()
           setPedidoSeleccionado(null)
         }
       } else {
         if (!proveedorSeleccionado || items.length === 0) return
-        await window.API.agregarPedido({
+        const resultado = await window.API.agregarPedido({
           proveedor: proveedorSeleccionado,
           total: totalPedido(),
           estado: 'Pendiente',
@@ -101,6 +145,11 @@ const Pedidos = () => {
             costo: i.costo
           }))
         })
+        if (respuestaConError(resultado)) {
+          avisos.error('No se pudo crear el pedido', detalleError(resultado))
+        } else {
+          avisos.exito('Pedido creado')
+        }
         setMostrarNuevo(false)
         setProveedorSeleccionado('')
         setItems([])
@@ -109,6 +158,7 @@ const Pedidos = () => {
       }
     } catch (error) {
       console.error(error)
+      avisos.error('No se pudo guardar el pedido')
     }
   }
 
@@ -123,96 +173,149 @@ const Pedidos = () => {
     }
   }
 
+  const pendientes = pedidos.filter((p) => p.estado === 'Pendiente').length
+  const enCurso = pedidos.filter((p) => p.estado === 'Pedido').length
+  const aprobadosDelMes = pedidos.filter(
+    (p) => p.estado === 'Aprobado' && esDelMesActual(p.updated_at || p.created_at)
+  ).length
+
+  const texto = busqueda.trim().toLowerCase().replace(/^#/, '')
+  const pedidosFiltrados = pedidos.filter(
+    (pedido) =>
+      (!filtroEstado || pedido.estado === filtroEstado) &&
+      (!texto ||
+        (pedido.proveedor || '').toLowerCase().includes(texto) ||
+        String(pedido.id).includes(texto))
+  )
+
+  const renderLista = () => {
+    if (!cargado) return <Cargando texto="Cargando pedidos…" />
+    if (pedidos.length === 0) {
+      return (
+        <EstadoVacio
+          icono={ClipboardList}
+          titulo="Todavía no hay pedidos"
+          descripcion="Los pedidos a proveedores que crees aparecen acá."
+        />
+      )
+    }
+    if (pedidosFiltrados.length === 0) {
+      return (
+        <EstadoVacio
+          titulo="No hay resultados"
+          descripcion="Probá con otra búsqueda o con otro estado."
+        />
+      )
+    }
+    return (
+      <Tabla desplazable>
+        <TablaEncabezado>
+          <TablaCelda encabezado>Pedido</TablaCelda>
+          <TablaCelda encabezado>Proveedor</TablaCelda>
+          <TablaCelda encabezado>Fecha</TablaCelda>
+          <TablaCelda encabezado>Estado</TablaCelda>
+          <TablaCelda encabezado alinear="derecha">
+            Total
+          </TablaCelda>
+          <TablaCelda encabezado alinear="derecha">
+            Acciones
+          </TablaCelda>
+        </TablaEncabezado>
+        <TablaCuerpo>
+          {pedidosFiltrados.map((pedido) => (
+            <TablaFila key={pedido.id}>
+              <TablaCelda className="font-medium tabular-nums">#{pedido.id}</TablaCelda>
+              <TablaCelda>{pedido.proveedor}</TablaCelda>
+              <TablaCelda className="whitespace-nowrap text-texto-secundario">
+                {formatearFecha(pedido.created_at)}
+              </TablaCelda>
+              <TablaCelda>
+                <InsigniaEstado estado={pedido.estado} />
+              </TablaCelda>
+              <TablaCelda alinear="derecha" className="font-medium">
+                {formatearMoneda(pedido.total)}
+              </TablaCelda>
+              <TablaCelda alinear="derecha">
+                <BotonIcono
+                  icono={Eye}
+                  etiqueta="Ver detalle"
+                  onClick={() => verDetalles(pedido)}
+                />
+              </TablaCelda>
+            </TablaFila>
+          ))}
+        </TablaCuerpo>
+      </Tabla>
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2 ps-4 pt-2">
-          <Package />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Pedidos a Proveedores
-          </h1>
-        </div>
-        {puede('pedidos.crear') && (
-          <button
-            onClick={() => {
-              setProveedorSeleccionado('')
-              setItems([])
-              setNota('')
-              setMostrarNuevo(true)
-            }}
-            disabled={proveedores?.length === 0}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Pedido
-          </button>
-        )}
+    <Pagina>
+      <EncabezadoPagina
+        icono={ClipboardList}
+        titulo="Pedidos a proveedores"
+        subtitulo={`${formatearNumero(pedidos.length)} ${pedidos.length === 1 ? 'pedido' : 'pedidos'}`}
+        acciones={
+          puede('pedidos.crear') && (
+            <Boton
+              variante="primario"
+              icono={Plus}
+              onClick={() => {
+                setProveedorSeleccionado('')
+                setItems([])
+                setNota('')
+                setMostrarNuevo(true)
+              }}
+              disabled={proveedores?.length === 0}
+              title={proveedores?.length === 0 ? 'Primero agregá un proveedor' : undefined}
+            >
+              Nuevo pedido
+            </Boton>
+          )
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <TarjetaMetrica etiqueta="Pendientes" valor={formatearNumero(pendientes)} icono={Clock} />
+        <TarjetaMetrica etiqueta="En curso" valor={formatearNumero(enCurso)} icono={Truck} />
+        <TarjetaMetrica
+          etiqueta="Aprobados este mes"
+          valor={formatearNumero(aprobadosDelMes)}
+          icono={CheckCircle2}
+        />
       </div>
 
-      {/* Lista */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border overflow-hidden dark:border-gray-700">
-        <div className="overflow-y-auto max-h-165">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Proveedor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Fecha
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Estado
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {pedidos.map((pedido) => (
-                <tr key={pedido.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    #{pedido.id}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    {pedido.proveedor}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    {new Date(pedido.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                    ${pedido.total?.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4">{pedido.estado}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => verDetalles(pedido)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
-                    >
-                      Detalles
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <BarraHerramientas>
+        <Buscador
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar por proveedor o número..."
+          etiqueta="Buscar pedidos"
+        />
+        <Selector
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value)}
+          aria-label="Filtrar por estado"
+          className="sm:w-48"
+        >
+          <option value="">Todos los estados</option>
+          {ESTADOS_PEDIDO.map((e) => (
+            <option key={e} value={e}>
+              {e}
+            </option>
+          ))}
+        </Selector>
+      </BarraHerramientas>
 
-      {/* Nuevo */}
+      {renderLista()}
+
       {mostrarNuevo && (
         <AgregarPedido
           proveedorSeleccionado={proveedorSeleccionado}
           proveedores={proveedores}
           agregarItem={agregarItem}
           items={items}
+          setItems={setItems}
           setProveedorSeleccionado={setProveedorSeleccionado}
           actualizarItem={actualizarItem}
           productos={productosProveedor}
@@ -227,7 +330,6 @@ const Pedidos = () => {
         />
       )}
 
-      {/* actualizar */}
       {pedidoSeleccionado && (
         <EditarPedido
           pedidoSeleccionado={pedidoSeleccionado}
@@ -238,7 +340,7 @@ const Pedidos = () => {
           setPedidoSeleccionado={setPedidoSeleccionado}
         />
       )}
-    </div>
+    </Pagina>
   )
 }
 

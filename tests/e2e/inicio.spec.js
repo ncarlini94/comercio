@@ -1,16 +1,24 @@
-import { test, expect, PROPIETARIO, sembrarUsuarios, entrarComo, iniciarSesion } from './ayudantes'
+import {
+  test,
+  expect,
+  PROPIETARIO,
+  sembrarUsuarios,
+  entrarComo,
+  iniciarSesion,
+  esperarUsuarioActual
+} from './ayudantes'
 
 test('primer inicio: crea al Propietario, inicia sesión y ve todas las secciones', async ({
   ventana
 }) => {
   await expect(ventana.getByRole('heading', { name: 'Configuración inicial' })).toBeVisible()
 
-  await ventana.getByLabel('Usuario:').fill(PROPIETARIO.usuario)
-  await ventana.getByLabel('Correo Electrónico:').fill(PROPIETARIO.mail)
-  await ventana.getByLabel('Contraseña:').fill(PROPIETARIO.password)
+  await ventana.getByLabel('Usuario', { exact: true }).fill(PROPIETARIO.usuario)
+  await ventana.getByLabel('Correo electrónico', { exact: true }).fill(PROPIETARIO.mail)
+  await ventana.getByLabel('Contraseña', { exact: true }).fill(PROPIETARIO.password)
   await ventana.getByRole('button', { name: 'Crear cuenta' }).click()
 
-  await expect(ventana.getByRole('heading', { name: 'Iniciar Sesión' })).toBeVisible()
+  await expect(ventana.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible()
   await iniciarSesion(ventana, PROPIETARIO)
 
   await expect(ventana.getByRole('heading', { name: 'Panel de Control' })).toBeVisible()
@@ -18,7 +26,7 @@ test('primer inicio: crea al Propietario, inicia sesión y ve todas las seccione
   for (const seccion of ['Dashboard', 'Ventas', 'Usuarios', 'Roles', 'Configuración']) {
     await expect(ventana.getByRole('button', { name: seccion, exact: true })).toBeVisible()
   }
-  await expect(ventana.getByText(`${PROPIETARIO.usuario} · Propietario`)).toBeVisible()
+  await esperarUsuarioActual(ventana, PROPIETARIO.usuario, 'Propietario')
 })
 
 test('el tema claro/oscuro se alterna y se conserva al recargar', async ({ ventana }) => {

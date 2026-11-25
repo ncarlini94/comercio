@@ -1,6 +1,31 @@
-import PropTypes from 'prop-types'
 import { useState, useEffect } from 'react'
-import { Package, Users, ShoppingCart, AlertTriangle, BarChart3 } from 'lucide-react'
+import {
+  AlertTriangle,
+  BarChart3,
+  DollarSign,
+  Package,
+  PackageCheck,
+  ShoppingCart,
+  Trophy,
+  Users
+} from 'lucide-react'
+import {
+  Pagina,
+  EncabezadoPagina,
+  EstadoVacio,
+  Insignia,
+  Tabla,
+  TablaCelda,
+  TablaCuerpo,
+  TablaEncabezado,
+  TablaFila,
+  Tarjeta,
+  TarjetaMetrica
+} from '../ui'
+import { formatearFecha, formatearMoneda, formatearNumero } from '../../utils/formato'
+import { etiquetaMetodo, varianteMetodo } from '../ventas/metodosPago'
+
+const comoLista = (valor) => (Array.isArray(valor) ? valor : [])
 
 const Dashboard = () => {
   const [fecha, setFecha] = useState('')
@@ -46,175 +71,156 @@ const Dashboard = () => {
       })
 
       const ultimasVentas = await window.API.obtenerUltimasVentas()
-      setVentasRecientes(ultimasVentas || [])
+      setVentasRecientes(comoLista(ultimasVentas))
 
       const bajo = await window.API.obtenerProductosStockBajo()
-      setProductosStockBajo(bajo || [])
+      setProductosStockBajo(comoLista(bajo))
 
       const masVendidos = await window.API.obtenerProductosMasVendidos()
-      setProductosMasVendidos(masVendidos || [])
+      setProductosMasVendidos(comoLista(masVendidos))
     } catch (error) {
       console.error('Error cargando datos del panel:', error)
     }
   }
 
-  const TarjetaEstadistica = ({ titulo, valor, icono: Icono, color, sufijo = '' }) => (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{titulo}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {valor}
-            {sufijo}
-          </p>
-        </div>
-        <div className={`p-3 rounded-full ${color}`}>
-          <Icono className="w-6 h-6 text-white" />
-        </div>
-      </div>
-    </div>
-  )
-
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center space-x-4 mb-6">
-        <BarChart3 />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Panel de Control</h1>
-      </div>
+    <Pagina>
+      <EncabezadoPagina
+        icono={BarChart3}
+        titulo="Panel de control"
+        subtitulo="Resumen del comercio"
+      />
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <TarjetaEstadistica
-          titulo="Total Productos"
-          valor={estadisticas.productos}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <TarjetaMetrica
+          etiqueta="Vendido hoy"
+          valor={formatearMoneda(estadisticas.ventasHoy ?? 0)}
+          icono={DollarSign}
+        />
+        <TarjetaMetrica
+          etiqueta="Productos"
+          valor={formatearNumero(estadisticas.productos ?? 0)}
           icono={Package}
-          color="bg-blue-500"
         />
-        <TarjetaEstadistica
-          titulo="Proveedores"
-          valor={estadisticas.proveedores}
+        <TarjetaMetrica
+          etiqueta="Proveedores"
+          valor={formatearNumero(estadisticas.proveedores ?? 0)}
           icono={Users}
-          color="bg-green-500"
         />
-        <TarjetaEstadistica
-          titulo="Ventas Hoy"
-          valor={`$${(estadisticas.ventasHoy ?? 0).toFixed(2)}`}
-          icono={ShoppingCart}
-          color="bg-purple-500"
-        />
-        <TarjetaEstadistica
-          titulo="Stock Bajo"
-          valor={estadisticas.stockBajo}
+        <TarjetaMetrica
+          etiqueta="Stock bajo"
+          valor={formatearNumero(estadisticas.stockBajo ?? 0)}
           icono={AlertTriangle}
-          color="bg-red-500"
+          tendencia={estadisticas.stockBajo > 0 ? 'Productos por reponer' : 'Todo en orden'}
+          direccion={estadisticas.stockBajo > 0 ? 'baja' : 'neutra'}
         />
       </div>
 
-      {productosMasVendidos.length > 0 && (
-        <section className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border mb-2 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Productos más vendidos
-          </h2>
-          <div className="flex items-center justify-between">
-            {productosMasVendidos.map((prod, idx) => (
-              <div
-                key={prod.id || idx}
-                className="flex flex-col items-center w-30 min-h-30 p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg justify-between"
-              >
-                <div className={`p-2 mb-2 rounded-full bg-blue-500`}>
-                  <Package className="w-6 h-6 text-white" />
-                </div>
-                <span className="font-bold text-blue-700 dark:text-blue-300 text-center">
-                  {prod.producto}
-                </span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Vendidos: {prod.totalVendido}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-2 lg:grid-rows-[auto_minmax(0,1fr)]">
+        <Tarjeta titulo="Ventas recientes" className="lg:col-span-2">
+          {ventasRecientes.length > 0 ? (
+            <Tabla>
+              <TablaEncabezado>
+                <TablaCelda encabezado>N.°</TablaCelda>
+                <TablaCelda encabezado>Fecha</TablaCelda>
+                <TablaCelda encabezado>Vendedor</TablaCelda>
+                <TablaCelda encabezado>Método</TablaCelda>
+                <TablaCelda encabezado alinear="derecha">
+                  Total
+                </TablaCelda>
+              </TablaEncabezado>
+              <TablaCuerpo>
+                {ventasRecientes.map((venta) => (
+                  <TablaFila key={venta.id}>
+                    <TablaCelda className="font-medium tabular-nums">#{venta.id}</TablaCelda>
+                    <TablaCelda className="whitespace-nowrap">
+                      {formatearFecha(venta.created_at)}
+                    </TablaCelda>
+                    <TablaCelda className="text-texto-secundario">{venta.vendedor}</TablaCelda>
+                    <TablaCelda>
+                      <Insignia variante={varianteMetodo(venta.metodo)}>
+                        {etiquetaMetodo(venta.metodo)}
+                      </Insignia>
+                    </TablaCelda>
+                    <TablaCelda alinear="derecha" className="font-semibold">
+                      {formatearMoneda(venta.total ?? 0)}
+                    </TablaCelda>
+                  </TablaFila>
+                ))}
+              </TablaCuerpo>
+            </Tabla>
+          ) : (
+            <EstadoVacio
+              icono={ShoppingCart}
+              titulo="No hay ventas registradas"
+              descripcion="Las últimas ventas aparecen acá."
+            />
+          )}
+        </Tarjeta>
 
-      {/* Ventas recientes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-10">
-        <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Ventas Recientes
-          </h2>
-          <div className="overflow-y-auto space-y-1 max-h-100">
-            {ventasRecientes.length > 0 ? (
-              ventasRecientes.map((venta) => (
-                <div
-                  key={venta.id}
-                  className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-900 rounded"
+        <Tarjeta titulo="Productos con stock bajo" sinRelleno desplazable>
+          {productosStockBajo.length > 0 ? (
+            <ul className="divide-y divide-borde">
+              {productosStockBajo.map((producto, idx) => (
+                <li
+                  key={producto.id ?? idx}
+                  className="flex items-center justify-between gap-3 px-5 py-3"
                 >
-                  <div>
-                    <p className="font-medium">Venta #{venta.id}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(venta.created_at).toLocaleDateString()}
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-texto">{producto.nombre}</p>
+                    <p className="truncate text-sm text-texto-secundario">
+                      Proveedor: {producto.Proveedor?.nombre || 'Sin asignar'}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <p className="font-semibold text-green-600">
-                      {`$${(venta.total ?? 0).toFixed(2)}`}
+                  <div className="shrink-0 text-right">
+                    <Insignia variante="peligro">Stock: {formatearNumero(producto.stock)}</Insignia>
+                    <p className="mt-1 text-xs text-texto-tenue">
+                      Mínimo: {formatearNumero(producto.stock_minimo)}
                     </p>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                No hay ventas registradas
-              </p>
-            )}
-          </div>
-        </section>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EstadoVacio
+              icono={PackageCheck}
+              titulo="No hay productos con stock bajo"
+              descripcion="Todos los productos están por encima del mínimo."
+            />
+          )}
+        </Tarjeta>
 
-        {/* Productos con stock bajo */}
-        <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Productos con Stock Bajo
-          </h2>
-          <div className="overflow-y-auto space-y-1 max-h-100">
-            {productosStockBajo.length > 0 ? (
-              productosStockBajo.map((producto, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/30 rounded"
+        <Tarjeta titulo="Productos más vendidos" sinRelleno desplazable>
+          {productosMasVendidos.length > 0 ? (
+            <ol className="divide-y divide-borde">
+              {productosMasVendidos.map((prod, idx) => (
+                <li
+                  key={prod.id ?? prod.producto ?? idx}
+                  className="flex items-center justify-between gap-3 px-5 py-3"
                 >
-                  <div>
-                    <p className="font-medium text-red-900 dark:text-red-200">{producto.nombre}</p>
-                    <p className="text-sm text-red-600 dark:text-red-400">
-                      Proveedor: {producto.Proveedor.nombre || 'Sin asignar'}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primario-suave text-xs font-semibold text-primario-texto">
+                      {idx + 1}
+                    </span>
+                    <p className="truncate font-medium text-texto">{prod.producto}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-red-600 dark:text-red-400">
-                      Stock: {producto.stock}
-                    </p>
-                    <p className="text-xs text-red-500">Minimo: {producto.stock_minimo}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                No hay productos con stock bajo
-              </p>
-            )}
-          </div>
-        </section>
+                  <p className="shrink-0 text-sm tabular-nums text-texto-secundario">
+                    {formatearNumero(prod.totalVendido)} vendidos
+                  </p>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <EstadoVacio
+              icono={Trophy}
+              titulo="Todavía no hay productos vendidos"
+              descripcion="El ranking se arma con las ventas registradas."
+            />
+          )}
+        </Tarjeta>
       </div>
-    </div>
+    </Pagina>
   )
-}
-
-Dashboard.propTypes = {
-  titulo: PropTypes.string,
-  descripcion: PropTypes.string,
-  valor: PropTypes.number,
-  icono: PropTypes.elementType,
-  color: PropTypes.string,
-  sufijo: PropTypes.string
 }
 
 export default Dashboard

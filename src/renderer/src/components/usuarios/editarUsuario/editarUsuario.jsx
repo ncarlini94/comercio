@@ -1,9 +1,6 @@
 import PropTypes from 'prop-types'
 import { useState } from 'react'
-
-const campo =
-  'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-60'
-const etiqueta = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+import { Boton, Campo, CampoConEtiqueta, Modal, Selector } from '../../ui'
 
 // Edición de un usuario. Rol y estado no se pueden cambiar sobre uno mismo.
 const EditarUsuario = ({ usuario, rolesAsignables, esUnoMismo, onGuardar, onCancelar }) => {
@@ -24,8 +21,7 @@ const EditarUsuario = ({ usuario, rolesAsignables, esUnoMismo, onGuardar, onCanc
     ? rolesAsignables
     : [usuario.rol, ...rolesAsignables]
 
-  const guardar = async (e) => {
-    e.preventDefault()
+  const guardar = async () => {
     setGuardando(true)
     setMensaje('')
     const cambios = { usuario: datos.usuario, mail: datos.mail }
@@ -40,74 +36,51 @@ const EditarUsuario = ({ usuario, rolesAsignables, esUnoMismo, onGuardar, onCanc
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <form
-        onSubmit={guardar}
-        className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4 space-y-4"
-      >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Editar usuario {esUnoMismo && '(usted)'}
-        </h3>
-        <div>
-          <label className={etiqueta}>Usuario *</label>
-          <input
-            name="usuario"
-            required
-            value={datos.usuario}
-            onChange={cambiar}
-            className={campo}
-          />
-        </div>
-        <div>
-          <label className={etiqueta}>Mail *</label>
-          <input
-            type="email"
-            name="mail"
-            required
-            value={datos.mail}
-            onChange={cambiar}
-            className={campo}
-          />
-        </div>
+    <Modal
+      titulo={`Editar usuario${esUnoMismo ? ' (usted)' : ''}`}
+      alCerrar={onCancelar}
+      alEnviar={guardar}
+      bloquearCierre={guardando}
+      pie={
+        <>
+          <Boton onClick={onCancelar} disabled={guardando}>
+            Cancelar
+          </Boton>
+          <Boton variante="primario" type="submit" disabled={guardando}>
+            {guardando ? 'Guardando...' : 'Guardar'}
+          </Boton>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <CampoConEtiqueta etiqueta="Usuario" obligatorio>
+          <Campo name="usuario" required value={datos.usuario} onChange={cambiar} />
+        </CampoConEtiqueta>
+        <CampoConEtiqueta etiqueta="Mail" obligatorio>
+          <Campo type="email" name="mail" required value={datos.mail} onChange={cambiar} />
+        </CampoConEtiqueta>
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={etiqueta}>Rol</label>
-            <select
-              name="rol"
-              value={datos.rol}
-              onChange={cambiar}
-              disabled={esUnoMismo}
-              className={campo}
-            >
+          <CampoConEtiqueta etiqueta="Rol">
+            <Selector name="rol" value={datos.rol} onChange={cambiar} disabled={esUnoMismo}>
               {opcionesRol.map((rol) => (
                 <option key={rol} value={rol}>
                   {rol}
                 </option>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className={etiqueta}>Estado</label>
-            <select
-              name="estado"
-              value={datos.estado}
-              onChange={cambiar}
-              disabled={esUnoMismo}
-              className={campo}
-            >
+            </Selector>
+          </CampoConEtiqueta>
+          <CampoConEtiqueta etiqueta="Estado">
+            <Selector name="estado" value={datos.estado} onChange={cambiar} disabled={esUnoMismo}>
               <option value="Activo">Activo</option>
               <option value="Inactivo">Inactivo</option>
-            </select>
-          </div>
+            </Selector>
+          </CampoConEtiqueta>
         </div>
         {esUnoMismo && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            No puede cambiar su propio rol ni su estado.
-          </p>
+          <p className="text-xs text-texto-tenue">No puede cambiar su propio rol ni su estado.</p>
         )}
-        <div>
-          <label className={etiqueta}>Nueva contraseña</label>
-          <input
+        <CampoConEtiqueta etiqueta="Nueva contraseña">
+          <Campo
             type="password"
             name="password"
             value={datos.password}
@@ -115,28 +88,15 @@ const EditarUsuario = ({ usuario, rolesAsignables, esUnoMismo, onGuardar, onCanc
             placeholder="Dejar vacío para no cambiarla"
             maxLength={72}
             autoComplete="new-password"
-            className={campo}
           />
-        </div>
-        {mensaje && <p className="text-sm text-red-600 dark:text-red-400">{mensaje}</p>}
-        <div className="flex justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onCancelar}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={guardando}
-            className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {guardando ? 'Guardando...' : 'Guardar'}
-          </button>
-        </div>
-      </form>
-    </div>
+        </CampoConEtiqueta>
+        {mensaje && (
+          <p role="alert" className="text-sm text-peligro-texto">
+            {mensaje}
+          </p>
+        )}
+      </div>
+    </Modal>
   )
 }
 

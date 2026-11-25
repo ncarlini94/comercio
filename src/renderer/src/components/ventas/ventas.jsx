@@ -1,20 +1,138 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, PackageSearch, ShoppingCart } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import {
+  CalendarRange,
+  DollarSign,
+  Eye,
+  Plus,
+  Receipt,
+  SearchX,
+  ShoppingCart,
+  Trash2,
+  TrendingUp
+} from 'lucide-react'
 import AgregarVenta from './agregarVenta/agregarVenta'
 import DetallesVentas from './detallesVenta/detallesVentas'
 import { usePermisos } from '../../sesion'
+import {
+  Pagina,
+  Cargando,
+  BarraHerramientas,
+  Boton,
+  BotonIcono,
+  Buscador,
+  EncabezadoPagina,
+  EstadoVacio,
+  Insignia,
+  Selector,
+  Tabla,
+  TablaCelda,
+  TablaCuerpo,
+  TablaEncabezado,
+  TablaFila,
+  TarjetaMetrica,
+  useAvisos,
+  useConfirmar
+} from '../ui'
+import { formatearFecha, formatearMoneda, formatearNumero } from '../../utils/formato'
+import { METODOS_PAGO, etiquetaMetodo, varianteMetodo } from './metodosPago'
+
+const RANGOS_FECHA = [
+  { valor: 'todas', etiqueta: 'Todas las fechas' },
+  { valor: 'hoy', etiqueta: 'Hoy' },
+  { valor: 'semana', etiqueta: 'Últimos 7 días' },
+  { valor: 'mes', etiqueta: 'Este mes' }
+]
+
+const DIA_MS = 24 * 60 * 60 * 1000
+
+const inicioDelDia = (fecha) => new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate())
+
+// La semana empieza el lunes.
+const inicioDeSemana = (fecha) => {
+  const dia = inicioDelDia(fecha)
+  const desdeLunes = (dia.getDay() + 6) % 7
+  return new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() - desdeLunes)
+}
+
+const sumarTotales = (lista) => lista.reduce((suma, v) => suma + (Number(v.total) || 0), 0)
+
+const entre = (ventas, desde, hasta) =>
+  ventas.filter((v) => {
+    const f = new Date(v.created_at)
+    return f >= desde && f < hasta
+  })
+
+const porcentaje = new Intl.NumberFormat('es-AR', {
+  style: 'percent',
+  maximumFractionDigits: 0,
+  signDisplay: 'exceptZero'
+})
+
+// Compara un monto con el del período anterior: texto y dirección para TarjetaMetrica.
+const comparar = (actual, anterior, periodo) => {
+  if (anterior === 0) {
+    return actual > 0
+      ? { tendencia: `Sin ventas ${periodo}`, direccion: 'sube' }
+      : { tendencia: `Sin ventas ${periodo}`, direccion: 'neutra' }
+  }
+  const cambio = (actual - anterior) / anterior
+  const direccion = cambio > 0 ? 'sube' : cambio < 0 ? 'baja' : 'neutra'
+  return { tendencia: `${porcentaje.format(cambio)} vs. ${periodo}`, direccion }
+}
+
+const calcularMetricas = (ventas, ahora = new Date()) => {
+  const hoy = inicioDelDia(ahora)
+  const manana = new Date(hoy.getTime() + DIA_MS)
+  const ayer = new Date(hoy.getTime() - DIA_MS)
+  const semana = inicioDeSemana(ahora)
+  const semanaPasada = new Date(semana.getFullYear(), semana.getMonth(), semana.getDate() - 7)
+  const mismoMomentoSemanaPasada = new Date(ahora.getTime() - 7 * DIA_MS)
+
+  const ventasHoy = entre(ventas, hoy, manana)
+  const totalHoy = sumarTotales(ventasHoy)
+  const totalAyer = sumarTotales(entre(ventas, ayer, hoy))
+  const totalSemana = sumarTotales(entre(ventas, semana, manana))
+  // Se compara contra el mismo tramo de la semana pasada (del lunes hasta este momento).
+  const totalSemanaPasada = sumarTotales(entre(ventas, semanaPasada, mismoMomentoSemanaPasada))
+
+  return {
+    totalHoy,
+    vsAyer: comparar(totalHoy, totalAyer, 'ayer'),
+    cantidadHoy: ventasHoy.length,
+    ticketPromedio: ventasHoy.length ? totalHoy / ventasHoy.length : 0,
+    totalSemana,
+    vsSemanaPasada: comparar(totalSemana, totalSemanaPasada, 'semana pasada')
+  }
+}
+
+const desdeRango = (rango, ahora = new Date()) => {
+  const hoy = inicioDelDia(ahora)
+  if (rango === 'hoy') return hoy
+  if (rango === 'semana') return new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 6)
+  if (rango === 'mes') return new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  return null
+}
+
+const nombresProductos = (venta) =>
+  (venta.Productos_vendidos ?? []).map((item) => item.producto).join(', ')
 
 const Ventas = () => {
   const { puede } = usePermisos()
+  const avisos = useAvisos()
+  const confirmar = useConfirmar()
   const [ventas, setVentas] = useState([])
+  const [cargado, setCargado] = useState(false)
   const [productos, setProductos] = useState([])
   const [mostrarNuevaVenta, setMostrarNuevaVenta] = useState(false)
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null)
   const [carrito, setCarrito] = useState([])
   const [loading, setLoading] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [metodoFiltro, setMetodoFiltro] = useState('')
+  const [rango, setRango] = useState('todas')
   const vendedor = localStorage.usuario
   useEffect(() => {
-    cargarVentas()
+    cargarVentas().finally(() => setCargado(true))
     cargarProductos()
   }, [])
 
@@ -44,10 +162,8 @@ const Ventas = () => {
 
   const cargarDetallesVenta = async (id) => {
     try {
-      console.log(id)
       const items = await window.API.obtenerProductosVenta(id)
       const venta = ventas.find((v) => v.id === id)
-      console.log(items)
       if (venta) {
         setVentaSeleccionada({ ...venta, items })
       }
@@ -56,117 +172,221 @@ const Ventas = () => {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar la venta?')) {
-      try {
-        await window.API.eliminarVenta(id)
-        cargarVentas()
-      } catch (error) {
-        console.error('Error al eliminar producto:', error)
+  const handleDelete = async (venta) => {
+    const ok = await confirmar({
+      titulo: 'Anular venta',
+      mensaje: `Se anulará la venta #${venta.id} por ${formatearMoneda(venta.total)} y se devolverá el stock de sus productos.`,
+      textoConfirmar: 'Anular venta',
+      peligro: true
+    })
+    if (!ok) return
+    try {
+      const resultado = await window.API.eliminarVenta(venta.id)
+      if (resultado?.error) {
+        avisos.error('No se pudo anular la venta', resultado.error)
+      } else {
+        avisos.exito('Venta anulada', `La venta #${venta.id} se anuló y el stock se restauró.`)
       }
+      cargarVentas()
+    } catch (error) {
+      console.error('Error al eliminar producto:', error)
+      avisos.error('No se pudo anular la venta')
     }
   }
 
+  const metricas = useMemo(() => calcularMetricas(ventas), [ventas])
+
+  const ventasFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    const desde = desdeRango(rango)
+    return ventas.filter((venta) => {
+      if (metodoFiltro && venta.metodo !== metodoFiltro) return false
+      if (desde && new Date(venta.created_at) < desde) return false
+      if (!texto) return true
+      return (
+        nombresProductos(venta).toLowerCase().includes(texto) ||
+        (venta.vendedor ?? '').toLowerCase().includes(texto) ||
+        `#${venta.id}`.includes(texto)
+      )
+    })
+  }, [ventas, busqueda, metodoFiltro, rango])
+
+  const hayFiltros = busqueda.trim() !== '' || metodoFiltro !== '' || rango !== 'todas'
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setMetodoFiltro('')
+    setRango('todas')
+  }
+
+  const puedeCrear = puede('ventas.crear')
+  const abrirNuevaVenta = () => setMostrarNuevaVenta(true)
+  const botonNuevaVenta = puedeCrear && (
+    <Boton
+      variante="primario"
+      icono={Plus}
+      onClick={abrirNuevaVenta}
+      disabled={!productos.length}
+      title={productos.length ? undefined : 'No hay productos cargados'}
+    >
+      Nueva venta
+    </Boton>
+  )
+
+  const subtitulo =
+    ventas.length === 1
+      ? '1 venta registrada'
+      : `${formatearNumero(ventas.length)} ventas registradas`
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center ps-4 pt-2 gap-2">
-          <ShoppingCart />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ventas</h1>
-        </div>
-        {puede('ventas.crear') && (
-          <button
-            onClick={() => setMostrarNuevaVenta(true)}
-            disabled={!productos.length}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:hover:bg-green-600"
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Venta
-          </button>
-        )}
+    <Pagina>
+      <EncabezadoPagina
+        icono={ShoppingCart}
+        titulo="Ventas"
+        subtitulo={subtitulo}
+        acciones={botonNuevaVenta || undefined}
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <TarjetaMetrica
+          etiqueta="Vendido hoy"
+          valor={formatearMoneda(metricas.totalHoy)}
+          icono={DollarSign}
+          tendencia={metricas.vsAyer.tendencia}
+          direccion={metricas.vsAyer.direccion}
+        />
+        <TarjetaMetrica
+          etiqueta="Ventas hoy"
+          valor={formatearNumero(metricas.cantidadHoy)}
+          icono={Receipt}
+          tendencia={`Ticket promedio ${formatearMoneda(metricas.ticketPromedio)}`}
+        />
+        <TarjetaMetrica
+          etiqueta="Esta semana"
+          valor={formatearMoneda(metricas.totalSemana)}
+          icono={TrendingUp}
+          tendencia={metricas.vsSemanaPasada.tendencia}
+          direccion={metricas.vsSemanaPasada.direccion}
+        />
+        <TarjetaMetrica
+          etiqueta="Total histórico"
+          valor={formatearMoneda(sumarTotales(ventas))}
+          icono={CalendarRange}
+          tendencia={subtitulo}
+        />
       </div>
 
-      {/* Lista de ventas */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border overflow-hidden dark:border-gray-700">
-        <div className="overflow-y-auto max-h-165">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Fecha
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Productos
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Metodo de Pago
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  vendedor
-                </th>
-                <th className="px-10 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {ventas.map((venta) => (
-                <tr key={venta.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    #{venta.id}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    {new Date(venta.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-4 text-sm font-semibold text-green-600">
-                    ${venta.total.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    {venta.Productos_vendidos
-                      ? venta.Productos_vendidos.reduce((acc, item) => acc + item.cantidad, 0)
-                      : 0}{' '}
-                    {(venta.Productos_vendidos
-                      ? venta.Productos_vendidos.reduce((acc, item) => acc + item.cantidad, 0)
-                      : 0) === 1
-                      ? 'Producto'
-                      : 'Productos'}
-                  </td>
-                  <td className="px-10 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    {venta.metodo}
-                  </td>
-                  <td className="px-10 py-4 text-sm text-gray-900 dark:text-gray-100">
-                    {venta.vendedor}
-                  </td>
-                  <td className="px-11 py-4 text-right">
-                    <button
+      <BarraHerramientas>
+        <Buscador
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar por producto o vendedor"
+          etiqueta="Buscar ventas"
+        />
+        <Selector
+          aria-label="Método de pago"
+          value={metodoFiltro}
+          onChange={(e) => setMetodoFiltro(e.target.value)}
+          className="sm:w-48"
+        >
+          <option value="">Todos los métodos</option>
+          {METODOS_PAGO.map((m) => (
+            <option key={m} value={m}>
+              {etiquetaMetodo(m)}
+            </option>
+          ))}
+        </Selector>
+        <Selector
+          aria-label="Rango de fechas"
+          value={rango}
+          onChange={(e) => setRango(e.target.value)}
+          className="sm:w-44"
+        >
+          {RANGOS_FECHA.map((r) => (
+            <option key={r.valor} value={r.valor}>
+              {r.etiqueta}
+            </option>
+          ))}
+        </Selector>
+      </BarraHerramientas>
+
+      {!cargado ? (
+        <Cargando texto="Cargando ventas…" />
+      ) : ventas.length === 0 ? (
+        <EstadoVacio
+          icono={ShoppingCart}
+          titulo="Todavía no hay ventas"
+          descripcion="Las ventas que registres aparecen en esta lista."
+        />
+      ) : ventasFiltradas.length === 0 ? (
+        <EstadoVacio
+          icono={SearchX}
+          titulo="Ninguna venta coincide con los filtros"
+          descripcion="Probá con otra búsqueda, otro método de pago u otro rango de fechas."
+          accion={hayFiltros && <Boton onClick={limpiarFiltros}>Limpiar filtros</Boton>}
+        />
+      ) : (
+        <Tabla desplazable>
+          <TablaEncabezado>
+            <TablaCelda encabezado>N.°</TablaCelda>
+            <TablaCelda encabezado>Fecha</TablaCelda>
+            <TablaCelda encabezado>Productos</TablaCelda>
+            <TablaCelda encabezado>Vendedor</TablaCelda>
+            <TablaCelda encabezado>Método</TablaCelda>
+            <TablaCelda encabezado alinear="derecha">
+              Total
+            </TablaCelda>
+            <TablaCelda encabezado alinear="derecha">
+              Acciones
+            </TablaCelda>
+          </TablaEncabezado>
+          <TablaCuerpo>
+            {ventasFiltradas.map((venta) => {
+              const productosTexto = nombresProductos(venta)
+              return (
+                <TablaFila key={venta.id}>
+                  <TablaCelda className="font-medium tabular-nums">#{venta.id}</TablaCelda>
+                  <TablaCelda className="whitespace-nowrap">
+                    {formatearFecha(venta.created_at)}
+                  </TablaCelda>
+                  <TablaCelda>
+                    <span className="block max-w-xs truncate" title={productosTexto}>
+                      {productosTexto || '—'}
+                    </span>
+                  </TablaCelda>
+                  <TablaCelda className="text-texto-secundario">{venta.vendedor}</TablaCelda>
+                  <TablaCelda>
+                    <Insignia variante={varianteMetodo(venta.metodo)}>
+                      {etiquetaMetodo(venta.metodo)}
+                    </Insignia>
+                  </TablaCelda>
+                  <TablaCelda alinear="derecha" className="font-semibold">
+                    {formatearMoneda(venta.total)}
+                  </TablaCelda>
+                  <TablaCelda alinear="derecha" className="whitespace-nowrap">
+                    <BotonIcono
+                      icono={Eye}
+                      etiqueta="Ver detalle"
+                      tamano="sm"
                       onClick={() => cargarDetallesVenta(venta.id)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm font-medium"
-                    >
-                      <PackageSearch className="w-4 h-4" />
-                    </button>
+                    />
                     {puede('ventas.anular') && (
-                      <button
-                        onClick={() => handleDelete(venta.id)}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 ps-4"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <BotonIcono
+                        icono={Trash2}
+                        etiqueta="Anular venta"
+                        variante="peligro"
+                        tamano="sm"
+                        onClick={() => handleDelete(venta)}
+                      />
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                  </TablaCelda>
+                </TablaFila>
+              )
+            })}
+          </TablaCuerpo>
+        </Tabla>
+      )}
 
-      {/* Agregar Venta */}
       {mostrarNuevaVenta && (
         <AgregarVenta
           vendedor={vendedor}
@@ -181,14 +401,13 @@ const Ventas = () => {
         />
       )}
 
-      {/* Modal detalles venta */}
       {ventaSeleccionada && (
         <DetallesVentas
           ventaSeleccionada={ventaSeleccionada}
           setVentaSeleccionada={setVentaSeleccionada}
         />
       )}
-    </div>
+    </Pagina>
   )
 }
 

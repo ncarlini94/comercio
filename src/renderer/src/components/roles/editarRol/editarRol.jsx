@@ -1,5 +1,8 @@
 import PropTypes from 'prop-types'
 import { useState } from 'react'
+import { Boton, Campo, CampoConEtiqueta, CasillaVerificacion, Modal } from '../../ui'
+
+const SIN_PERMISO = 'No puede otorgar un permiso que usted no tiene'
 
 // Formulario para crear o editar un rol. Los permisos se agrupan por sección.
 // Los permisos que la sesión no tiene se muestran deshabilitados: no se pueden otorgar.
@@ -32,8 +35,7 @@ const EditarRol = ({ rol, catalogo, permisosPropios, onGuardar, onCancelar }) =>
       return nuevos
     })
 
-  const guardar = async (e) => {
-    e.preventDefault()
+  const guardar = async () => {
     setGuardando(true)
     setMensaje('')
     const respuesta = await onGuardar({ nombre, descripcion, permisos: [...permisos] })
@@ -42,110 +44,78 @@ const EditarRol = ({ rol, catalogo, permisosPropios, onGuardar, onCancelar }) =>
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <form
-        onSubmit={guardar}
-        className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col"
-      >
-        <div className="p-6 border-b dark:border-gray-700 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {rol ? `Editar rol: ${rol.nombre}` : 'Nuevo rol'}
-          </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nombre *
-              </label>
-              <input
-                type="text"
-                required
-                maxLength={40}
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Descripción
-              </label>
-              <input
-                type="text"
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
+    <Modal
+      titulo={rol ? `Editar rol: ${rol.nombre}` : 'Nuevo rol'}
+      tamano="xl"
+      alCerrar={onCancelar}
+      alEnviar={guardar}
+      bloquearCierre={guardando}
+      pie={
+        <>
+          {mensaje && (
+            <p role="alert" className="me-auto self-center text-sm text-peligro-texto">
+              {mensaje}
+            </p>
+          )}
+          <Boton onClick={onCancelar} disabled={guardando}>
+            Cancelar
+          </Boton>
+          <Boton variante="primario" type="submit" disabled={guardando}>
+            {guardando ? 'Guardando...' : 'Guardar'}
+          </Boton>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="grid gap-4 md:grid-cols-2">
+          <CampoConEtiqueta etiqueta="Nombre" obligatorio>
+            <Campo
+              required
+              maxLength={40}
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+          </CampoConEtiqueta>
+          <CampoConEtiqueta etiqueta="Descripción">
+            <Campo value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+          </CampoConEtiqueta>
         </div>
 
-        <div className="p-6 overflow-y-auto grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {Object.entries(secciones).map(([seccion, lista]) => {
             const todos = lista.every((p) => permisos.has(p.id))
             return (
-              <fieldset
-                key={seccion}
-                className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2"
-              >
-                <legend className="px-1 flex items-center gap-3">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{seccion}</span>
-                  <button
-                    type="button"
+              <fieldset key={seccion} className="space-y-2 rounded-lg border border-borde p-3">
+                <legend className="flex items-center gap-3 px-1">
+                  <span className="text-sm font-medium text-texto">{seccion}</span>
+                  <Boton
+                    variante="fantasma"
+                    tamano="sm"
+                    className="py-0.5"
                     onClick={() => alternarSeccion(lista, !todos)}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {todos ? 'Quitar todos' : 'Marcar todos'}
-                  </button>
+                  </Boton>
                 </legend>
                 {lista.map((permiso) => {
                   const disponible = permisosPropios.has(permiso.id)
                   return (
-                    <label
-                      key={permiso.id}
-                      title={disponible ? '' : 'No puede otorgar un permiso que usted no tiene'}
-                      className={`flex items-center gap-2 text-sm ${
-                        disponible
-                          ? 'text-gray-700 dark:text-gray-300'
-                          : 'text-gray-400 dark:text-gray-500'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4"
+                    <div key={permiso.id} title={disponible ? undefined : SIN_PERMISO}>
+                      <CasillaVerificacion
+                        etiqueta={permiso.nombre}
                         checked={permisos.has(permiso.id)}
                         disabled={!disponible}
                         onChange={() => alternar(permiso.id)}
                       />
-                      {permiso.nombre}
-                    </label>
+                    </div>
                   )
                 })}
               </fieldset>
             )
           })}
         </div>
-
-        <div className="p-4 border-t dark:border-gray-700 flex items-center justify-between gap-3">
-          <p className="text-sm text-red-600 dark:text-red-400">{mensaje}</p>
-          <div className="flex gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={onCancelar}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={guardando}
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {guardando ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
+      </div>
+    </Modal>
   )
 }
 

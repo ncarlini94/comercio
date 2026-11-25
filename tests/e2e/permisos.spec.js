@@ -8,7 +8,8 @@ import {
   sembrarVenta,
   entrarComo,
   irA,
-  filaDe
+  filaDe,
+  esperarUsuarioActual
 } from './ayudantes'
 
 // Deja una venta cargada por el Propietario y la ventana en el login. Devuelve el id de la venta.
@@ -17,7 +18,7 @@ const prepararVenta = async (ventana) => {
   await entrarComo(ventana, PROPIETARIO)
   const idVenta = await sembrarVenta(ventana)
   await ventana.getByRole('button', { name: 'Cerrar sesión' }).click()
-  await expect(ventana.getByRole('heading', { name: 'Iniciar Sesión' })).toBeVisible()
+  await expect(ventana.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible()
   return idVenta
 }
 
@@ -27,7 +28,7 @@ test('Vendedor: sin sección Administrar, redirige sin permiso y no puede anular
   const idVenta = await prepararVenta(ventana)
   await entrarComo(ventana, VENDEDOR)
 
-  await expect(ventana.getByText(`${VENDEDOR.usuario} · Vendedor`)).toBeVisible()
+  await esperarUsuarioActual(ventana, VENDEDOR.usuario, 'Vendedor')
   await expect(ventana.getByText('Administrar', { exact: true })).toHaveCount(0)
   for (const seccion of ['Usuarios', 'Roles', 'Configuración']) {
     await expect(ventana.getByRole('button', { name: seccion, exact: true })).toHaveCount(0)
@@ -82,7 +83,7 @@ test('Administrador: no puede otorgar "Restaurar una copia" ni editar al Propiet
 }) => {
   await sembrarUsuarios(ventana, [ADMINISTRADOR, VENDEDOR])
   await entrarComo(ventana, ADMINISTRADOR)
-  await expect(ventana.getByText(`${ADMINISTRADOR.usuario} · Administrador`)).toBeVisible()
+  await esperarUsuarioActual(ventana, ADMINISTRADOR.usuario, 'Administrador')
 
   await irA(ventana, 'Roles')
   await ventana.getByRole('button', { name: 'Nuevo rol' }).click()

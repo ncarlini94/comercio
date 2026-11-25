@@ -1,6 +1,20 @@
-import { Package, Truck, Upload } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Copy, Package, Truck, Upload } from 'lucide-react'
 import { useState } from 'react'
 import PropTypes from 'prop-types'
+import {
+  Boton,
+  Insignia,
+  Tabla,
+  TablaCelda,
+  TablaCuerpo,
+  TablaEncabezado,
+  TablaFila,
+  Tarjeta,
+  TarjetaMetrica,
+  useAvisos
+} from '../../ui'
+import TituloConIcono from '../TituloConIcono'
+import { formatearNumero } from '../../../utils/formato'
 
 const SECCIONES = [
   {
@@ -22,6 +36,7 @@ const SECCIONES = [
 const MAX_ERRORES_VISIBLES = 50
 
 export default function Importar() {
+  const avisos = useAvisos()
   const [cargando, setCargando] = useState(null)
   const [resultado, setResultado] = useState(null)
 
@@ -31,10 +46,11 @@ export default function Importar() {
     try {
       const respuesta = await window.API.importar(seccion.id)
       if (respuesta.canceled) return
-      setResultado({ seccion: seccion.label, ...respuesta })
+      if (respuesta.success) setResultado({ seccion: seccion.label, ...respuesta })
+      else avisos.error(`No se pudo importar ${seccion.label.toLowerCase()}`, respuesta.message)
     } catch (error) {
       console.error('Error al importar:', error)
-      setResultado({ seccion: seccion.label, success: false, message: 'Error al importar' })
+      avisos.error(`No se pudo importar ${seccion.label.toLowerCase()}`, 'Error al importar')
     } finally {
       setCargando(null)
     }
@@ -42,48 +58,41 @@ export default function Importar() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600 dark:text-gray-400">
+      <p className="text-sm text-texto-secundario">
         Seleccione un archivo Excel (.xlsx). La primera fila debe tener los nombres de las columnas.
         Para obtener un archivo de ejemplo, exporte la sección desde &quot;Exportar&quot;.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2">
         {SECCIONES.map((seccion) => {
-          const Icon = seccion.icon
           return (
-            <div
+            <Tarjeta
               key={seccion.id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-4 space-y-3 dark:border-gray-700"
+              titulo={<TituloConIcono icono={seccion.icon}>{seccion.label}</TituloConIcono>}
             >
-              <div className="flex items-center gap-2">
-                <Icon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                <h2 className="font-semibold text-gray-900 dark:text-gray-100">{seccion.label}</h2>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  Columnas requeridas
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {seccion.columnas.map((columna) => (
-                    <code
-                      key={columna}
-                      className="text-xs bg-gray-100 dark:bg-gray-900 px-1.5 py-0.5 rounded"
-                    >
-                      {columna}
-                    </code>
-                  ))}
+              <div className="space-y-4">
+                <div>
+                  <p className="mb-2 text-xs font-medium text-texto-secundario">
+                    Columnas requeridas
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {seccion.columnas.map((columna) => (
+                      <Insignia key={columna}>
+                        <code>{columna}</code>
+                      </Insignia>
+                    ))}
+                  </div>
                 </div>
+                <p className="text-xs text-texto-tenue">{seccion.nota}</p>
+                <Boton
+                  icono={Upload}
+                  onClick={() => handleImportar(seccion)}
+                  disabled={cargando !== null}
+                >
+                  {cargando === seccion.id ? 'Importando...' : 'Seleccionar archivo'}
+                </Boton>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{seccion.nota}</p>
-              <button
-                onClick={() => handleImportar(seccion)}
-                disabled={cargando !== null}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50"
-              >
-                <Upload className="w-4 h-4" />
-                {cargando === seccion.id ? 'Importando...' : 'Seleccionar archivo'}
-              </button>
-            </div>
+            </Tarjeta>
           )
         })}
       </div>
@@ -94,73 +103,67 @@ export default function Importar() {
 }
 
 function ResultadoImportacion({ resultado }) {
-  if (!resultado.success) {
-    return (
-      <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg p-4 text-sm">
-        {resultado.seccion}: {resultado.message}
-      </div>
-    )
-  }
-
   const { errores = [] } = resultado
+  const hayErrores = errores.length > 0
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-4 space-y-3 dark:border-gray-700">
-      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-        Resultado: {resultado.seccion}
-      </h3>
-      <div className="flex flex-wrap gap-4 text-sm">
-        <span className="text-green-700 dark:text-green-300">
-          {resultado.insertados} importados
-        </span>
-        <span className="text-gray-600 dark:text-gray-400">{resultado.duplicados} ya existían</span>
-        <span
-          className={
-            errores.length > 0
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-gray-600 dark:text-gray-400'
-          }
-        >
-          {errores.length} con errores
-        </span>
+    <section className="space-y-4" aria-label={`Resultado: ${resultado.seccion}`}>
+      <h3 className="text-base font-semibold text-texto">Resultado: {resultado.seccion}</h3>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <TarjetaMetrica
+          etiqueta="Importados"
+          valor={formatearNumero(resultado.insertados ?? 0)}
+          icono={CheckCircle2}
+          tendencia="Filas nuevas"
+          direccion="sube"
+        />
+        <TarjetaMetrica
+          etiqueta="Repetidos"
+          valor={formatearNumero(resultado.duplicados ?? 0)}
+          icono={Copy}
+          tendencia="Ya existían"
+          direccion="neutra"
+        />
+        <TarjetaMetrica
+          etiqueta="Con errores"
+          valor={formatearNumero(errores.length)}
+          icono={AlertTriangle}
+          tendencia={hayErrores ? 'Filas que no se cargaron' : 'Sin errores'}
+          direccion={hayErrores ? 'baja' : 'neutra'}
+        />
       </div>
-      {errores.length > 0 && (
-        <div className="max-h-64 overflow-y-auto border rounded dark:border-gray-700">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                  Fila
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                  Problema
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
+
+      {hayErrores && (
+        <div className="space-y-2">
+          <Tabla className="max-h-64 overflow-y-auto">
+            <TablaEncabezado>
+              <TablaCelda encabezado alinear="derecha" className="w-20">
+                Fila
+              </TablaCelda>
+              <TablaCelda encabezado>Problema</TablaCelda>
+            </TablaEncabezado>
+            <TablaCuerpo>
               {errores.slice(0, MAX_ERRORES_VISIBLES).map(({ fila, mensaje }) => (
-                <tr key={fila}>
-                  <td className="px-3 py-1.5 text-gray-700 dark:text-gray-300">{fila}</td>
-                  <td className="px-3 py-1.5 text-gray-600 dark:text-gray-400">{mensaje}</td>
-                </tr>
+                <TablaFila key={fila}>
+                  <TablaCelda alinear="derecha">{fila}</TablaCelda>
+                  <TablaCelda>{mensaje}</TablaCelda>
+                </TablaFila>
               ))}
-            </tbody>
-          </table>
+            </TablaCuerpo>
+          </Tabla>
           {errores.length > MAX_ERRORES_VISIBLES && (
-            <p className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-texto-tenue">
               Se muestran los primeros {MAX_ERRORES_VISIBLES} errores de {errores.length}.
             </p>
           )}
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
 ResultadoImportacion.propTypes = {
   resultado: PropTypes.shape({
     seccion: PropTypes.string.isRequired,
-    success: PropTypes.bool,
-    message: PropTypes.string,
     insertados: PropTypes.number,
     duplicados: PropTypes.number,
     errores: PropTypes.arrayOf(

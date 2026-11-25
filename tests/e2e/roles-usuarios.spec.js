@@ -100,7 +100,7 @@ test('Usuarios: desactivar a un usuario impide su login y uno no puede cambiar s
   await expect(ajena).toHaveCount(0)
 
   await ventana.getByRole('button', { name: 'Cerrar sesión' }).click()
-  await expect(ventana.getByRole('heading', { name: 'Iniciar Sesión' })).toBeVisible()
+  await expect(ventana.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible()
   await iniciarSesion(ventana, VENDEDOR)
   await expect(ventana.getByText(/inactivo/i)).toBeVisible()
   await expect(ventana.getByRole('button', { name: 'Cerrar sesión' })).toHaveCount(0)

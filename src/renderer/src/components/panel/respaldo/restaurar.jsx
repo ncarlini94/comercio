@@ -1,5 +1,9 @@
-import { AlertTriangle, History } from 'lucide-react'
+import { CheckCircle2, History, Loader2, RotateCcw, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import Alerta from '../Alerta'
+import TituloConIcono from '../TituloConIcono'
+import { Boton, CasillaVerificacion, Insignia, Tarjeta, useAvisos } from '../../ui'
+import { formatearFecha, formatearNumero } from '../../../utils/formato'
 
 const ETIQUETAS = {
   usuarios: 'Usuarios',
@@ -12,14 +16,11 @@ const ETIQUETAS = {
 const formatearTamanio = (bytes) =>
   bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`
 
-const formatearFecha = (iso) =>
-  new Date(iso).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
-
 export default function Restaurar() {
+  const avisos = useAvisos()
   const [analisis, setAnalisis] = useState(null)
   const [confirmado, setConfirmado] = useState(false)
   const [cargando, setCargando] = useState(null)
-  const [mensaje, setMensaje] = useState(null)
   // Cuando la base ya se cerró, se tapa la pantalla hasta que el programa se reinicie.
   const [reinicio, setReinicio] = useState(null)
 
@@ -28,17 +29,16 @@ export default function Restaurar() {
 
   const elegirCopia = async () => {
     setCargando('analisis')
-    setMensaje(null)
     setAnalisis(null)
     setConfirmado(false)
     try {
       const respuesta = await window.API.elegirRespaldoParaRestaurar()
       if (respuesta.canceled) return
       if (respuesta.success) setAnalisis(respuesta.info)
-      else setMensaje({ ok: false, texto: respuesta.message })
+      else avisos.error('No se pudo leer la copia', respuesta.message)
     } catch (error) {
       console.error('Error al analizar la copia:', error)
-      setMensaje({ ok: false, texto: 'Error al leer la copia' })
+      avisos.error('Error al leer la copia')
     } finally {
       setCargando(null)
     }
@@ -52,7 +52,6 @@ export default function Restaurar() {
 
   const restaurar = async () => {
     setCargando('restaurar')
-    setMensaje(null)
     try {
       const respuesta = await window.API.restaurarRespaldo()
       if (respuesta.success) {
@@ -71,118 +70,101 @@ export default function Restaurar() {
         setAnalisis(null)
         setConfirmado(false)
       }
-      setMensaje({ ok: false, texto: respuesta.message })
+      avisos.error('No se pudo restaurar la copia', respuesta.message)
       setCargando(null)
     } catch (error) {
       console.error('Error al restaurar:', error)
-      setMensaje({ ok: false, texto: 'Error al restaurar la copia' })
+      avisos.error('Error al restaurar la copia')
       setCargando(null)
     }
   }
 
   if (reinicio) {
+    const IconoResultado = reinicio.ok ? CheckCircle2 : XCircle
     return (
-      <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md space-y-2 text-center">
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="titulo-reinicio"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-capa p-4"
+      >
+        <div className="w-full max-w-md space-y-3 rounded-xl border border-borde bg-superficie p-6 text-center shadow-xl">
+          <IconoResultado
+            className={`mx-auto h-10 w-10 ${reinicio.ok ? 'text-exito' : 'text-peligro'}`}
+            aria-hidden="true"
+          />
           <p
-            className={`font-semibold ${reinicio.ok ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}
+            id="titulo-reinicio"
+            className={`font-semibold ${reinicio.ok ? 'text-exito-texto' : 'text-peligro-texto'}`}
           >
             {reinicio.ok ? 'Restauración completada' : 'No se pudo restaurar'}
           </p>
-          <p className="text-sm break-all text-gray-700 dark:text-gray-300">{reinicio.texto}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Reiniciando el programa...</p>
+          <p className="text-sm break-all text-texto-secundario">{reinicio.texto}</p>
+          <p className="flex items-center justify-center gap-2 text-sm text-texto-tenue">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            Reiniciando el programa...
+          </p>
         </div>
       </div>
     )
   }
 
+  const ocupado = cargando !== null
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <History className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-        <h2 className="font-semibold text-gray-900 dark:text-gray-100">Restaurar una copia</h2>
-      </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Reemplaza todos los datos actuales por los de una copia de seguridad. Antes de hacerlo se
-        guarda automáticamente una copia de los datos actuales.
-      </p>
-
-      {!analisis && (
-        <button
-          onClick={elegirCopia}
-          disabled={cargando !== null}
-          className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-        >
+    <Tarjeta
+      titulo={<TituloConIcono icono={History}>Restaurar una copia</TituloConIcono>}
+      descripcion="Reemplaza todos los datos actuales por los de una copia de seguridad. Antes de hacerlo se guarda automáticamente una copia de los datos actuales."
+    >
+      {!analisis ? (
+        <Boton icono={RotateCcw} onClick={elegirCopia} disabled={ocupado}>
           {cargando === 'analisis' ? 'Revisando copia...' : 'Elegir copia para restaurar'}
-        </button>
-      )}
-
-      {analisis && (
-        <div className="space-y-3">
-          <div className="text-sm space-y-1">
-            <p className="break-all text-gray-900 dark:text-gray-100">{analisis.archivo}</p>
-            <p className="text-gray-500 dark:text-gray-400">
+        </Boton>
+      ) : (
+        <div className="space-y-4">
+          <div className="space-y-1 text-sm">
+            <p className="font-medium break-all text-texto">{analisis.archivo}</p>
+            <p className="text-texto-tenue">
               {formatearFecha(analisis.fechaArchivo)} · {formatearTamanio(analisis.tamanio)}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {Object.entries(analisis.conteos).map(([clave, total]) => (
-              <span
-                key={clave}
-                className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
-              >
-                {ETIQUETAS[clave] ?? clave}: {total}
-              </span>
+              <Insignia key={clave}>
+                {ETIQUETAS[clave] ?? clave}: {formatearNumero(total)}
+              </Insignia>
             ))}
           </div>
 
-          <div className="flex gap-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg p-3 text-sm">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
-            <p>
-              Todos los datos actuales (ventas, inventario, proveedores, pedidos y usuarios) se van
-              a reemplazar por los de esta copia. Lo que se haya cargado después de la fecha de la
-              copia se pierde, salvo en la copia de los datos actuales que se crea antes de
-              restaurar. El programa se reinicia y hay que volver a iniciar sesión.
-            </p>
-          </div>
+          <Alerta>
+            Todos los datos actuales (ventas, inventario, proveedores, pedidos y usuarios) se van a
+            reemplazar por los de esta copia. Lo que se haya cargado después de la fecha de la copia
+            se pierde, salvo en la copia de los datos actuales que se crea antes de restaurar. El
+            programa se reinicia y hay que volver a iniciar sesión.
+          </Alerta>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <input
-              type="checkbox"
-              checked={confirmado}
-              onChange={(e) => setConfirmado(e.target.checked)}
-              disabled={cargando !== null}
-              className="w-4 h-4"
-            />
-            Entiendo que se van a reemplazar los datos actuales
-          </label>
+          <CasillaVerificacion
+            etiqueta="Entiendo que se van a reemplazar los datos actuales"
+            checked={confirmado}
+            onChange={(e) => setConfirmado(e.target.checked)}
+            disabled={ocupado}
+          />
 
-          <div className="flex gap-3">
-            <button
-              onClick={cancelar}
-              disabled={cargando !== null}
-              className="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
-            >
+          <div className="flex flex-wrap gap-3">
+            <Boton onClick={cancelar} disabled={ocupado}>
               Cancelar
-            </button>
-            <button
+            </Boton>
+            <Boton
+              variante="peligro"
+              icono={RotateCcw}
               onClick={restaurar}
-              disabled={!confirmado || cargando !== null}
-              className="px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              disabled={!confirmado || ocupado}
             >
               {cargando === 'restaurar' ? 'Restaurando...' : 'Restaurar y reiniciar'}
-            </button>
+            </Boton>
           </div>
         </div>
       )}
-
-      {mensaje && (
-        <p
-          className={`text-sm ${mensaje.ok ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}
-        >
-          {mensaje.texto}
-        </p>
-      )}
-    </div>
+    </Tarjeta>
   )
 }

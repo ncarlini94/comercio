@@ -11,27 +11,32 @@ import Pedidos from './components/pedidos/pedidos'
 import Usuarios from './components/usuarios/usuarios'
 import Panel from './components/panel/panel'
 import Roles from './components/roles/roles'
+import { ProveedorAvisos, ProveedorConfirmacion } from './components/ui'
 
 function App() {
   return (
-    <HashRouter>
-      <Routes>
-        <Route element={<PublicLayout />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/registro" element={<Registro />} />
-        </Route>
-        <Route element={<PrivatedLayout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/ventas" element={<Ventas />} />
-          <Route path="/inventario" element={<Inventario />} />
-          <Route path="/proveedores" element={<Proveedores />} />
-          <Route path="/pedidos" element={<Pedidos />} />
-          <Route path="/usuarios" element={<Usuarios />} />
-          <Route path="/roles" element={<Roles />} />
-          <Route path="/configuracion" element={<Panel />} />
-        </Route>
-      </Routes>
-    </HashRouter>
+    <ProveedorAvisos>
+      <ProveedorConfirmacion>
+        <HashRouter>
+          <Routes>
+            <Route element={<PublicLayout />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/registro" element={<Registro />} />
+            </Route>
+            <Route element={<PrivatedLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/ventas" element={<Ventas />} />
+              <Route path="/inventario" element={<Inventario />} />
+              <Route path="/proveedores" element={<Proveedores />} />
+              <Route path="/pedidos" element={<Pedidos />} />
+              <Route path="/usuarios" element={<Usuarios />} />
+              <Route path="/roles" element={<Roles />} />
+              <Route path="/configuracion" element={<Panel />} />
+            </Route>
+          </Routes>
+        </HashRouter>
+      </ProveedorConfirmacion>
+    </ProveedorAvisos>
   )
 }
 

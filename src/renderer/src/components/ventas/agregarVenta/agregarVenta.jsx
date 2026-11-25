@@ -1,6 +1,18 @@
 import PropTypes from 'prop-types'
-import { Trash2 } from 'lucide-react'
+import { Plus, ShoppingBasket, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import {
+  Boton,
+  BotonIcono,
+  Campo,
+  CampoConEtiqueta,
+  EstadoVacio,
+  Modal,
+  Selector,
+  useAvisos
+} from '../../ui'
+import { formatearMoneda, formatearNumero } from '../../../utils/formato'
+import { METODOS_PAGO, etiquetaMetodo } from '../metodosPago'
 
 const AgregarVenta = ({
   vendedor,
@@ -13,13 +25,13 @@ const AgregarVenta = ({
   cargarVentas,
   cargarProductos
 }) => {
+  const avisos = useAvisos()
   const [metodo, setMetodo] = useState('Efectivo')
-  const METODOS_PAGO = ['Efectivo', 'Mercado Pago', 'Debito', 'Credito']
   // Agregar producto al carrito
   const agregarAlCarrito = (producto) => {
     const existe = carrito.find((item) => item.producto.id === producto.id)
     if (existe) {
-      if (existe.cantidad < producto.stock_cantidad) {
+      if (existe.cantidad < producto.stock) {
         setCarrito(
           carrito.map((item) =>
             item.producto.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
@@ -49,6 +61,11 @@ const AgregarVenta = ({
     return carrito.reduce((total, item) => total + item.producto.precio * item.cantidad, 0)
   }
 
+  const cerrar = () => {
+    setMostrarNuevaVenta(false)
+    setCarrito([])
+  }
+
   // Completar venta
   const completarVenta = async () => {
     if (carrito.length === 0) return
@@ -65,154 +82,151 @@ const AgregarVenta = ({
         vendedor: vendedor
       }
 
-      await window.API.agregarVenta(ventaAEnviar)
+      const resultado = await window.API.agregarVenta(ventaAEnviar)
 
-      setCarrito([])
-      setMostrarNuevaVenta(false)
-      cargarVentas()
-      cargarProductos()
+      if (resultado?.error) {
+        avisos.error('No se pudo registrar la venta', resultado.error)
+      } else {
+        avisos.exito('Venta registrada', `Total: ${formatearMoneda(total)}`)
+        setCarrito([])
+        setMostrarNuevaVenta(false)
+        cargarVentas()
+        cargarProductos()
+      }
     } catch (error) {
       console.error('Error al completar la venta:', error)
+      avisos.error('No se pudo registrar la venta')
     }
     setLoading(false)
   }
+
   return (
-    <>
-      <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
-          <div className="px-6 py-4 border-b dark:border-gray-700">
-            <h3 className="text-lg font-semibold">Nueva Venta - {vendedor}</h3>
-          </div>
-
-          <div className="flex h-[calc(90vh-8rem)]">
-            {/* Lista de productos */}
-            <div className="w-1/2 p-6 border-r overflow-y-auto dark:border-gray-700">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-                Productos Disponibles
-              </h4>
-              <div className="space-y-2">
-                {productos.map((producto) => (
-                  <div
-                    key={producto.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-700"
-                  >
-                    <div>
-                      <p className="font-medium">{producto.nombre}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Stock: {producto.stock}
-                      </p>
-                      <p className="text-sm font-semibold text-green-600">
-                        ${producto.precio.toFixed(2)}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => agregarAlCarrito(producto)}
-                      disabled={producto.stock === 0}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:bg-gray-700 disabled:opacity-50"
-                    >
-                      Agregar
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Carrito */}
-            <div className="w-1/2 p-6 flex flex-col">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-                Carrito de Venta
-              </h4>
-
-              <div className="flex-1 overflow-y-auto">
-                {carrito.length === 0 ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    No hay productos en el carrito
+    <Modal
+      titulo="Nueva venta"
+      descripcion={`Vendedor: ${vendedor}`}
+      tamano="xl"
+      alCerrar={cerrar}
+      bloquearCierre={loading}
+      pie={
+        <>
+          <Boton onClick={cerrar} disabled={loading}>
+            Cancelar
+          </Boton>
+          <Boton
+            variante="primario"
+            onClick={completarVenta}
+            disabled={carrito.length === 0 || loading}
+          >
+            {loading ? 'Procesando...' : 'Confirmar'}
+          </Boton>
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Lista de productos */}
+        <section aria-labelledby="titulo-productos-disponibles" className="min-w-0">
+          <h3 id="titulo-productos-disponibles" className="mb-3 text-sm font-semibold text-texto">
+            Productos disponibles
+          </h3>
+          <ul className="space-y-2">
+            {productos.map((producto) => (
+              <li
+                key={producto.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-borde p-3 transition-colors hover:bg-superficie-alt"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-texto">{producto.nombre}</p>
+                  <p className="text-sm text-texto-secundario">
+                    Stock: {formatearNumero(producto.stock)}
                   </p>
-                ) : (
-                  <div className="space-y-3">
-                    {carrito.map((item) => (
-                      <div
-                        key={item.producto.id}
-                        className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium">{item.producto.nombre}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            ${item.producto.precio.toFixed(2)} c/u
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="number"
-                            min="1"
-                            max={item.producto.stock}
-                            value={item.cantidad}
-                            onChange={(e) =>
-                              actualizarCantidadCarrito(item.producto.id, parseInt(e.target.value))
-                            }
-                            className="w-16 px-2 py-1 border rounded text-center dark:border-gray-700"
-                          />
-                          <button
-                            onClick={() => actualizarCantidadCarrito(item.producto.id, 0)}
-                            className={`text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 space-y-4">
-                <div className="border-t pt-4 dark:border-gray-700">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-semibold">Metodo de pago:</span>
-                    <select
-                      value={metodo}
-                      onChange={(e) => setMetodo(e.target.value)}
-                      className="border rounded px-2 py-1 dark:border-gray-700"
-                    >
-                      {METODOS_PAGO.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-semibold">Total:</span>
-                    <span className="text-2xl font-bold text-green-600">
-                      ${obtenerTotalCarrito().toFixed(2)}
-                    </span>
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => {
-                        setMostrarNuevaVenta(false)
-                        setCarrito([])
-                      }}
-                      className="flex-1 px-4 py-2 text-white bg-gray-400 rounded-md hover:opacity-70"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={completarVenta}
-                      disabled={carrito.length === 0 || loading}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:hover:bg-green-600 transition-colors"
-                    >
-                      {loading ? 'Procesando...' : 'Confirmar'}
-                    </button>
-                  </div>
+                  <p className="text-sm font-semibold tabular-nums text-texto">
+                    {formatearMoneda(producto.precio)}
+                  </p>
                 </div>
-              </div>
+                <Boton
+                  tamano="sm"
+                  icono={Plus}
+                  onClick={() => agregarAlCarrito(producto)}
+                  disabled={producto.stock === 0}
+                >
+                  Agregar
+                </Boton>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Carrito */}
+        <section aria-labelledby="titulo-carrito" className="flex min-w-0 flex-col">
+          <h3 id="titulo-carrito" className="mb-3 text-sm font-semibold text-texto">
+            Carrito de venta
+          </h3>
+
+          {carrito.length === 0 ? (
+            <EstadoVacio
+              icono={ShoppingBasket}
+              titulo="El carrito está vacío"
+              descripcion="Agregá productos de la lista."
+              className="rounded-lg border border-dashed border-borde"
+            />
+          ) : (
+            <ul className="space-y-2">
+              {carrito.map((item) => (
+                <li
+                  key={item.producto.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-borde p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-texto">{item.producto.nombre}</p>
+                    <p className="text-sm tabular-nums text-texto-secundario">
+                      {formatearMoneda(item.producto.precio)} c/u
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Campo
+                      type="number"
+                      min="1"
+                      max={item.producto.stock}
+                      value={item.cantidad}
+                      onChange={(e) =>
+                        actualizarCantidadCarrito(item.producto.id, parseInt(e.target.value))
+                      }
+                      aria-label={`Cantidad de ${item.producto.nombre}`}
+                      className="w-20 text-center"
+                    />
+                    <BotonIcono
+                      icono={Trash2}
+                      etiqueta="Quitar del carrito"
+                      variante="peligro"
+                      tamano="sm"
+                      onClick={() => actualizarCantidadCarrito(item.producto.id, 0)}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="mt-4 space-y-4 border-t border-borde pt-4">
+            <CampoConEtiqueta etiqueta="Método de pago">
+              <Selector value={metodo} onChange={(e) => setMetodo(e.target.value)}>
+                {METODOS_PAGO.map((m) => (
+                  <option key={m} value={m}>
+                    {etiquetaMetodo(m)}
+                  </option>
+                ))}
+              </Selector>
+            </CampoConEtiqueta>
+            <div className="flex items-center justify-between">
+              <span className="text-base font-semibold text-texto">Total</span>
+              <span className="text-2xl font-semibold tabular-nums text-texto">
+                {formatearMoneda(obtenerTotalCarrito())}
+              </span>
             </div>
           </div>
-        </div>
+        </section>
       </div>
-    </>
+    </Modal>
   )
 }
 

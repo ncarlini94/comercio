@@ -1,4 +1,16 @@
 import PropTypes from 'prop-types'
+import { PackagePlus, Plus, X } from 'lucide-react'
+import {
+  AreaTexto,
+  Boton,
+  BotonIcono,
+  Campo,
+  CampoConEtiqueta,
+  EstadoVacio,
+  Modal,
+  Selector
+} from '../../ui'
+import { formatearMoneda } from '../../../utils/formato'
 
 const AgregarPedido = ({
   proveedorSeleccionado,
@@ -18,141 +30,143 @@ const AgregarPedido = ({
   setPedidoSeleccionado,
   setProductosSeleccionado
 }) => {
-  console.log('Productos disponibles:', productos)
-  console.log('Items del pedido:', items)
+  const cancelar = () => {
+    setPedidoSeleccionado(null)
+    setProductosSeleccionado([])
+    setMostrarNuevo(false)
+    setItems([])
+    setProveedorSeleccionado('')
+    setNota('')
+  }
+
+  const sinProductosDelProveedor = Boolean(proveedorSeleccionado) && productos.length === 0
+
   return (
-    <>
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
-          <div className="px-6 py-4 border-b dark:border-gray-700">
-            <h3 className="text-lg font-semibold">Nuevo Pedido</h3>
+    <Modal
+      titulo="Nuevo pedido"
+      tamano="lg"
+      alCerrar={cancelar}
+      alEnviar={handleSubmit}
+      pie={
+        <>
+          <Boton onClick={cancelar}>Cancelar</Boton>
+          <Boton
+            variante="primario"
+            type="submit"
+            disabled={!proveedorSeleccionado || items.length === 0}
+          >
+            Crear pedido
+          </Boton>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <CampoConEtiqueta
+          etiqueta="Proveedor"
+          obligatorio
+          ayuda={
+            sinProductosDelProveedor ? 'Este proveedor no tiene productos cargados.' : undefined
+          }
+        >
+          <Selector
+            value={proveedorSeleccionado}
+            onChange={(e) => setProveedorSeleccionado(e.target.value)}
+          >
+            <option value="">Seleccionar proveedor</option>
+            {proveedores.map((p) => (
+              <option key={p.id_proveedores} value={p.nombre}>
+                {p.nombre}
+              </option>
+            ))}
+          </Selector>
+        </CampoConEtiqueta>
+
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-texto">Productos del pedido</h3>
+            <Boton
+              tamano="sm"
+              icono={Plus}
+              onClick={agregarItem}
+              disabled={!proveedorSeleccionado || productos.length === 0}
+            >
+              Agregar producto
+            </Boton>
           </div>
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-8rem)]">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Proveedor *
-                </label>
-                <select
-                  value={proveedorSeleccionado}
-                  onChange={(e) => setProveedorSeleccionado(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
+
+          {items.length === 0 ? (
+            <EstadoVacio
+              icono={PackagePlus}
+              titulo="Sin productos"
+              descripcion="Elegí un proveedor y agregá los productos que querés pedir."
+              className="rounded-lg border border-dashed border-borde py-8"
+            />
+          ) : (
+            <ul className="space-y-2">
+              {items.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex flex-wrap items-center gap-3 rounded-lg border border-borde p-3"
                 >
-                  <option value="">Seleccionar proveedor</option>
-                  {proveedores.map((p) => (
-                    <option key={p.id_proveedores} value={p.nombre}>
-                      {p.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                    Productos del Pedido
-                  </h4>
-                  <button
-                    onClick={agregarItem}
-                    disabled={!proveedorSeleccionado || productos.length === 0}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:hover:bg-green-600"
+                  <Selector
+                    value={item.producto.id}
+                    onChange={(e) => actualizarItem(idx, 'producto', e.target.value)}
+                    aria-label={`Producto ${idx + 1}`}
+                    className="min-w-0 flex-1"
                   >
-                    Agregar Producto
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center space-x-3 p-3 border rounded-lg dark:border-gray-700"
-                    >
-                      <select
-                        value={item.producto.id}
-                        onChange={(e) => actualizarItem(idx, 'producto', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
-                      >
-                        {productos.map((prod) => (
-                          <option key={prod.id} value={prod.id}>
-                            {prod.nombre}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.cantidad}
-                        onChange={(e) => actualizarItem(idx, 'cantidad', e.target.value)}
-                        className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-center"
-                        placeholder="Cant."
-                      />
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={item.costo}
-                        onChange={(e) => actualizarItem(idx, 'costo', e.target.value)}
-                        className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
-                        placeholder="Costo"
-                      />
-                      <span className="w-24 text-right font-medium">
-                        ${(item.costo * item.cantidad).toFixed(2)}
-                      </span>
-                      <button
-                        onClick={() => eliminarItem(idx)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nota
-                </label>
-                <textarea
-                  value={nota}
-                  onChange={(e) => setNota(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
-                  rows={3}
-                />
-              </div>
-              <div className="border-t pt-4 dark:border-gray-700">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-lg font-semibold">Total del Pedido:</span>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    ${totalPedido().toFixed(2)}
+                    {productos.map((prod) => (
+                      <option key={prod.id} value={prod.id}>
+                        {prod.nombre}
+                      </option>
+                    ))}
+                  </Selector>
+                  <Campo
+                    type="number"
+                    min="1"
+                    value={item.cantidad}
+                    onChange={(e) => actualizarItem(idx, 'cantidad', e.target.value)}
+                    aria-label={`Cantidad del producto ${idx + 1}`}
+                    placeholder="Cant."
+                    className="w-20 text-right"
+                  />
+                  <Campo
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={item.costo}
+                    onChange={(e) => actualizarItem(idx, 'costo', e.target.value)}
+                    aria-label={`Costo del producto ${idx + 1}`}
+                    placeholder="Costo"
+                    className="w-28 text-right"
+                  />
+                  <span className="w-28 text-right font-medium tabular-nums text-texto">
+                    {formatearMoneda(item.costo * item.cantidad)}
                   </span>
-                </div>
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPedidoSeleccionado(null)
-                      setProductosSeleccionado([])
-                      setMostrarNuevo(false)
-                      setItems([])
-                      setProveedorSeleccionado('')
-                      setNota('')
-                    }}
-                    className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-600 rounded-md hover:opacity-70"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!proveedorSeleccionado || items.length === 0}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600"
-                  >
-                    Crear Pedido
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+                  <BotonIcono
+                    icono={X}
+                    etiqueta="Quitar producto"
+                    variante="peligro"
+                    tamano="sm"
+                    onClick={() => eliminarItem(idx)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <CampoConEtiqueta etiqueta="Nota">
+          <AreaTexto value={nota} onChange={(e) => setNota(e.target.value)} rows={3} />
+        </CampoConEtiqueta>
+
+        <div className="flex items-center justify-between border-t border-borde pt-4">
+          <span className="text-sm font-medium text-texto-secundario">Total del pedido</span>
+          <span className="text-2xl font-semibold tabular-nums text-texto">
+            {formatearMoneda(totalPedido())}
+          </span>
         </div>
       </div>
-    </>
+    </Modal>
   )
 }
 

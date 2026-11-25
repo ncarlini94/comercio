@@ -40,7 +40,7 @@ export default function PrivatedLayout() {
     return (
       <SesionContext.Provider value={contexto}>
         <Navbar activeSection="" onSectionChange={() => {}}>
-          <p className="p-6 text-gray-600 dark:text-gray-400">
+          <p className="text-texto-secundario">
             Su rol no tiene acceso a ninguna sección. Consulte al administrador.
           </p>
         </Navbar>

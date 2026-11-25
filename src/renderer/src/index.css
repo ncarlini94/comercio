@@ -3,46 +3,150 @@
 /* El modo oscuro se activa con la clase "dark" en <html> (ver tema.js), no con el sistema operativo. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+  Colores semánticos: se definen una sola vez acá y cambian solos con el modo oscuro.
+  Los componentes usan clases como bg-superficie, text-texto o bg-primario, sin variantes dark:.
+
+  - fondo: fondo de la ventana.
+  - superficie / superficie-alt: tarjetas, menús y modales / encabezados de tabla, filas al pasar el mouse.
+  - campo: fondo de los campos de formulario.
+  - borde / borde-fuerte: separadores / bordes de campos y botones secundarios.
+  - texto / texto-secundario / texto-tenue: texto principal / etiquetas / ayudas y marcadores.
+  - primario, primario-hover, sobre-primario: acción principal (una por vista) y su texto.
+  - primario-suave, primario-texto: fondo suave y texto para el ítem activo o insignias.
+  - peligro, exito, advertencia, info: color sólido, fondo suave (-suave) y texto sobre fondo suave (-texto).
+*/
+:root {
+  --fondo: var(--color-gray-50);
+  --superficie: var(--color-white);
+  --superficie-alt: var(--color-gray-100);
+  --campo: var(--color-white);
+  --borde: var(--color-gray-200);
+  --borde-fuerte: var(--color-gray-300);
+  --texto: var(--color-gray-900);
+  --texto-secundario: var(--color-gray-600);
+  --texto-tenue: var(--color-gray-500);
+  --capa: color-mix(in oklab, var(--color-gray-900) 50%, transparent);
+
+  --primario: var(--color-blue-600);
+  --primario-hover: var(--color-blue-700);
+  --sobre-primario: var(--color-white);
+  --primario-suave: var(--color-blue-50);
+  --primario-texto: var(--color-blue-700);
+
+  --peligro: var(--color-red-600);
+  --peligro-suave: var(--color-red-50);
+  --peligro-texto: var(--color-red-700);
+
+  --exito: var(--color-green-600);
+  --exito-suave: var(--color-green-50);
+  --exito-texto: var(--color-green-700);
+
+  --advertencia: var(--color-amber-500);
+  --advertencia-suave: var(--color-amber-50);
+  --advertencia-texto: var(--color-amber-700);
+
+  --info: var(--color-sky-600);
+  --info-suave: var(--color-sky-50);
+  --info-texto: var(--color-sky-700);
+}
+
+.dark {
+  --fondo: var(--color-gray-900);
+  --superficie: var(--color-gray-800);
+  --superficie-alt: var(--color-gray-700);
+  --campo: var(--color-gray-700);
+  --borde: var(--color-gray-700);
+  --borde-fuerte: var(--color-gray-600);
+  --texto: var(--color-gray-100);
+  --texto-secundario: var(--color-gray-300);
+  --texto-tenue: var(--color-gray-400);
+  --capa: color-mix(in oklab, var(--color-black) 60%, transparent);
+
+  --primario: var(--color-blue-600);
+  --primario-hover: var(--color-blue-500);
+  --sobre-primario: var(--color-white);
+  --primario-suave: color-mix(in oklab, var(--color-blue-900) 30%, transparent);
+  --primario-texto: var(--color-blue-300);
+
+  --peligro: var(--color-red-500);
+  --peligro-suave: color-mix(in oklab, var(--color-red-900) 30%, transparent);
+  --peligro-texto: var(--color-red-300);
+
+  --exito: var(--color-green-500);
+  --exito-suave: color-mix(in oklab, var(--color-green-900) 30%, transparent);
+  --exito-texto: var(--color-green-300);
+
+  --advertencia: var(--color-amber-400);
+  --advertencia-suave: color-mix(in oklab, var(--color-amber-900) 30%, transparent);
+  --advertencia-texto: var(--color-amber-300);
+
+  --info: var(--color-sky-500);
+  --info-suave: color-mix(in oklab, var(--color-sky-900) 30%, transparent);
+  --info-texto: var(--color-sky-300);
+}
+
+@theme inline {
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-superficie-alt: var(--superficie-alt);
+  --color-campo: var(--campo);
+  --color-borde: var(--borde);
+  --color-borde-fuerte: var(--borde-fuerte);
+  --color-texto: var(--texto);
+  --color-texto-secundario: var(--texto-secundario);
+  --color-texto-tenue: var(--texto-tenue);
+  --color-capa: var(--capa);
+
+  --color-primario: var(--primario);
+  --color-primario-hover: var(--primario-hover);
+  --color-sobre-primario: var(--sobre-primario);
+  --color-primario-suave: var(--primario-suave);
+  --color-primario-texto: var(--primario-texto);
+
+  --color-peligro: var(--peligro);
+  --color-peligro-suave: var(--peligro-suave);
+  --color-peligro-texto: var(--peligro-texto);
+
+  --color-exito: var(--exito);
+  --color-exito-suave: var(--exito-suave);
+  --color-exito-texto: var(--exito-texto);
+
+  --color-advertencia: var(--advertencia);
+  --color-advertencia-suave: var(--advertencia-suave);
+  --color-advertencia-texto: var(--advertencia-texto);
+
+  --color-info: var(--info);
+  --color-info-suave: var(--info-suave);
+  --color-info-texto: var(--info-texto);
+}
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-fondo text-texto;
   }
 
   .dark {
     color-scheme: dark;
   }
 
-  .dark body {
-    @apply bg-gray-900 text-gray-100;
-  }
-
-  /* Campos de formulario sin color propio: fondo y texto legibles en modo oscuro. */
-  .dark :where(input, select, textarea) {
-    @apply bg-gray-700 text-gray-100;
+  /* Campos de formulario sin color propio: fondo y texto legibles en ambos modos. */
+  :where(input, select, textarea) {
+    @apply bg-campo text-texto;
   }
 }
 
-input.validar:invalid {
-  border: 1px solid red;
-}
-
-input.validar:valid {
-  border: 1px solid green;
-}
-
-input.validar:focus {
-  outline: none;
-  box-shadow: none;
-}
-
+input.validar:invalid,
 select.validar:invalid {
-  border: 1px solid red;
+  border: 1px solid var(--peligro);
 }
 
+input.validar:valid,
 select.validar:valid {
-  border: 1px solid green;
+  border: 1px solid var(--exito);
 }
 
+input.validar:focus,
 select.validar:focus {
   outline: none;
   box-shadow: none;

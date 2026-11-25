@@ -1,12 +1,41 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Search, User, Users } from 'lucide-react'
+import { Mail, Pencil, Phone, Plus, Trash2, Truck, Users } from 'lucide-react'
 import AgregarProveedor from './agregarProveedor/agregarProveedor'
 import EditarProveedor from './editarProveedor/editarProveedor'
 import { usePermisos } from '../../sesion'
+import {
+  Pagina,
+  Cargando,
+  BarraHerramientas,
+  Boton,
+  BotonIcono,
+  Buscador,
+  EncabezadoPagina,
+  EstadoVacio,
+  Tabla,
+  TablaCelda,
+  TablaCuerpo,
+  TablaEncabezado,
+  TablaFila,
+  TarjetaMetrica,
+  useAvisos,
+  useConfirmar
+} from '../ui'
+import { formatearNumero } from '../../utils/formato'
+
+// Los canales devuelven { error } o { success: false, message } cuando algo falla.
+const respuestaConError = (r) => Boolean(r?.error) || r?.success === false
+const detalleError = (r) => r?.error || r?.message
+
+const telefonosDe = (proveedor) =>
+  [proveedor.telefono, proveedor.celular, proveedor.celular2].filter(Boolean)
 
 const Proveedores = () => {
   const { puede } = usePermisos()
+  const avisos = useAvisos()
+  const confirmar = useConfirmar()
   const [proveedores, setProveedores] = useState([])
+  const [cargado, setCargado] = useState(false)
   const [mostrarEditar, setMostrarEditar] = useState(false)
   const [editingProveedor, setEditingProveedor] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -24,7 +53,7 @@ const Proveedores = () => {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    cargarProveedores()
+    cargarProveedores().finally(() => setCargado(true))
   }, [])
 
   const cargarProveedores = async () => {
@@ -43,15 +72,16 @@ const Proveedores = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
     if (!formData.nombre) {
       setMensaje('El nombre es obligatorio.')
       return
     }
+    setLoading(true)
     setMensaje('')
     try {
+      let resultado
       if (editingProveedor) {
-        await window.API.actualizarProveedor(editingProveedor.id_proveedores, {
+        resultado = await window.API.actualizarProveedor(editingProveedor.id_proveedores, {
           ...formData
         })
       } else {
@@ -61,8 +91,14 @@ const Proveedores = () => {
           celular: formData.celular ? parseInt(formData.celular) : null,
           celular2: formData.celular2 ? parseInt(formData.celular2) : null
         }
-        await window.API.agregarProveedor(normalizado)
-        setMostrarNuevo(false)
+        resultado = await window.API.agregarProveedor(normalizado)
+      }
+      if (respuestaConError(resultado)) {
+        setMensaje(detalleError(resultado) || 'Error al guardar proveedor.')
+        avisos.error('No se pudo guardar el proveedor', detalleError(resultado))
+      } else {
+        avisos.exito(editingProveedor ? 'Proveedor actualizado' : 'Proveedor agregado')
+        resetForm()
       }
       cargarProveedores()
     } catch (error) {
@@ -87,15 +123,25 @@ const Proveedores = () => {
     setMensaje('')
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este proveedor?')) {
-      try {
-        await window.API.eliminarProveedor(id)
-        cargarProveedores()
-      } catch (error) {
-        setMensaje('Error al eliminar proveedor.')
-        console.error('Error al eliminar proveedor:', error)
+  const handleDelete = async (proveedor) => {
+    const confirmado = await confirmar({
+      titulo: 'Borrar proveedor',
+      mensaje: `Se borrará "${proveedor.nombre}". Esta acción no se puede deshacer.`,
+      textoConfirmar: 'Borrar',
+      peligro: true
+    })
+    if (!confirmado) return
+    try {
+      const resultado = await window.API.eliminarProveedor(proveedor.id_proveedores)
+      if (respuestaConError(resultado)) {
+        avisos.error('No se pudo borrar el proveedor', detalleError(resultado))
+      } else {
+        avisos.exito('Proveedor borrado')
       }
+      cargarProveedores()
+    } catch (error) {
+      console.error('Error al eliminar proveedor:', error)
+      avisos.error('No se pudo borrar el proveedor')
     }
   }
 
@@ -115,121 +161,127 @@ const Proveedores = () => {
     setMensaje('')
   }
 
+  const conMail = proveedores.filter((p) => p.mail).length
+  const conTelefono = proveedores.filter((p) => telefonosDe(p).length > 0).length
+
   const filteredProveedores = proveedores.filter(
     (proveedor) =>
       proveedor.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (proveedor.contacto || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2 ps-4 pt-2">
-          <Users />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Proveedores</h1>
-        </div>
-        {puede('proveedores.crear') && (
-          <button
-            onClick={() => {
-              setMostrarNuevo(true)
-            }}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Agregar Proveedor
-          </button>
-        )}
-      </div>
+  const renderLista = () => {
+    if (!cargado) return <Cargando texto="Cargando proveedores…" />
+    if (proveedores.length === 0) {
+      return (
+        <EstadoVacio
+          icono={Truck}
+          titulo="Todavía no hay proveedores"
+          descripcion="Los proveedores que agregues aparecen acá."
+        />
+      )
+    }
+    if (filteredProveedores.length === 0) {
+      return (
+        <EstadoVacio
+          titulo="No hay resultados"
+          descripcion="Probá buscando por otro nombre o contacto."
+        />
+      )
+    }
+    return (
+      <Tabla desplazable>
+        <TablaEncabezado>
+          <TablaCelda encabezado>Proveedor</TablaCelda>
+          <TablaCelda encabezado>Mail</TablaCelda>
+          <TablaCelda encabezado>Teléfonos</TablaCelda>
+          <TablaCelda encabezado>Dirección</TablaCelda>
+          <TablaCelda encabezado alinear="derecha">
+            Acciones
+          </TablaCelda>
+        </TablaEncabezado>
+        <TablaCuerpo>
+          {filteredProveedores.map((proveedor) => (
+            <TablaFila key={proveedor.id_proveedores}>
+              <TablaCelda>
+                <p className="font-medium">{proveedor.nombre}</p>
+                {proveedor.contacto && (
+                  <p className="text-texto-secundario">{proveedor.contacto}</p>
+                )}
+              </TablaCelda>
+              <TablaCelda className="text-texto-secundario">{proveedor.mail || '—'}</TablaCelda>
+              <TablaCelda className="whitespace-nowrap text-texto-secundario tabular-nums">
+                {telefonosDe(proveedor).length > 0
+                  ? telefonosDe(proveedor).map((numero, i) => <p key={i}>{numero}</p>)
+                  : '—'}
+              </TablaCelda>
+              <TablaCelda className="text-texto-secundario">
+                {proveedor.direccion || '—'}
+              </TablaCelda>
+              <TablaCelda alinear="derecha" className="whitespace-nowrap">
+                {puede('proveedores.editar') && (
+                  <BotonIcono
+                    icono={Pencil}
+                    etiqueta="Editar"
+                    onClick={() => handleEdit(proveedor)}
+                  />
+                )}
+                {puede('proveedores.eliminar') && (
+                  <BotonIcono
+                    icono={Trash2}
+                    etiqueta="Borrar"
+                    variante="peligro"
+                    onClick={() => handleDelete(proveedor)}
+                  />
+                )}
+              </TablaCelda>
+            </TablaFila>
+          ))}
+        </TablaCuerpo>
+      </Tabla>
+    )
+  }
 
-      {/* Buscador */}
-      <div className="relative">
-        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-        <input
-          type="text"
-          placeholder="Buscar proveedores..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+  return (
+    <Pagina>
+      <EncabezadoPagina
+        icono={Truck}
+        titulo="Proveedores"
+        subtitulo={`${formatearNumero(proveedores.length)} ${proveedores.length === 1 ? 'proveedor' : 'proveedores'}`}
+        acciones={
+          puede('proveedores.crear') && (
+            <Boton variante="primario" icono={Plus} onClick={() => setMostrarNuevo(true)}>
+              Agregar proveedor
+            </Boton>
+          )
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <TarjetaMetrica
+          etiqueta="Proveedores"
+          valor={formatearNumero(proveedores.length)}
+          icono={Users}
+        />
+        <TarjetaMetrica etiqueta="Con mail" valor={formatearNumero(conMail)} icono={Mail} />
+        <TarjetaMetrica
+          etiqueta="Con teléfono"
+          valor={formatearNumero(conTelefono)}
+          icono={Phone}
         />
       </div>
 
-      {/* Grid de proveedores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProveedores.map((proveedor) => (
-          <div
-            key={proveedor.id_proveedores}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-6 dark:border-gray-700"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    {proveedor.nombre}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{proveedor.contacto}</p>
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                {puede('proveedores.editar') && (
-                  <button
-                    onClick={() => handleEdit(proveedor)}
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
-                    title="Editar"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                )}
-                {puede('proveedores.eliminar') && (
-                  <button
-                    onClick={() => handleDelete(proveedor.id_proveedores)}
-                    className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              {proveedor.mail && (
-                <div className="flex items-center">
-                  <span className="font-medium w-16">Mail:</span>
-                  <span>{proveedor.mail}</span>
-                </div>
-              )}
-              {proveedor.telefono && (
-                <div className="flex items-center">
-                  <span className="font-medium w-16">Teléfono:</span>
-                  <span>{proveedor.telefono}</span>
-                </div>
-              )}
-              {proveedor.celular && (
-                <div className="flex items-center">
-                  <span className="font-medium w-16">Celular:</span>
-                  <span>{proveedor.celular}</span>
-                </div>
-              )}
-              {proveedor.celular2 && (
-                <div className="flex items-center">
-                  <span className="font-medium w-16">Celular 2:</span>
-                  <span>{proveedor.celular2}</span>
-                </div>
-              )}
-              {proveedor.direccion && (
-                <div className="flex items-start">
-                  <span className="font-medium w-16">Dirección:</span>
-                  <span className="flex-1">{proveedor.direccion}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      <BarraHerramientas>
+        <Buscador
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar por nombre o contacto..."
+          etiqueta="Buscar proveedores"
+        />
+      </BarraHerramientas>
 
-      {/* Agregar */}
+      {renderLista()}
+
       {mostrarNuevo && (
         <AgregarProveedor
           onSubmit={handleSubmit}
@@ -241,7 +293,6 @@ const Proveedores = () => {
         />
       )}
 
-      {/* Editar */}
       {mostrarEditar && (
         <EditarProveedor
           onSubmit={handleSubmit}
@@ -252,7 +303,7 @@ const Proveedores = () => {
           loading={loading}
         />
       )}
-    </div>
+    </Pagina>
   )
 }
 
